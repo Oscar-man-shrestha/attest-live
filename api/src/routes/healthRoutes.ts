@@ -21,7 +21,7 @@ router.get("/health", async (_req: Request, res: Response) => {
         status: nlp === "down" ? "degraded" : "ok",
         timestamp: new Date().toISOString(),
         nlp,
-        workers: ["embedding", "document", "day7", "mail-inline"],
+        workers: ["embedding", "document", "day7", "marketplace", "mail-inline"],
     });
 });
 

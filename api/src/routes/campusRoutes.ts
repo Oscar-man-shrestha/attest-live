@@ -2,6 +2,7 @@ import { NextFunction, Request, Response, Router } from "express";
 import multer from "multer";
 import { authenticateToken } from "../middleware/auth";
 import * as campus from "../controllers/campusController";
+import * as deals from "../controllers/dealController";
 import { DOCUMENT_MAX_BYTES, DOCUMENT_MIME_TYPES } from "../../../packages/types";
 
 const router = Router();
@@ -57,6 +58,35 @@ function singleProfileMedia(req: Request, res: Response, next: NextFunction) {
 }
 
 router.use(authenticateToken);
+router.use(deals.writeGuard);
+
+// Marketplace Phase 1 — deals, milestones, off-platform payment records, reviews, scoped threads
+router.get("/engagements", deals.listEngagements);
+router.post("/engagements", deals.createEngagement);
+router.get("/engagements/:id", deals.getEngagement);
+router.post("/engagements/:id/accept", deals.acceptEngagement);
+router.post("/engagements/:id/cancel", deals.cancelEngagement);
+router.post("/engagements/:id/review", deals.reviewEngagement);
+router.get("/engagements/:id/messages", deals.listMessages);
+router.post("/engagements/:id/messages", deals.postMessage);
+router.post("/milestones/:id/submit", deals.submitMilestone);
+router.post("/milestones/:id/accept", deals.acceptMilestone);
+router.post("/milestones/:id/dispute", deals.disputeMilestone);
+router.post("/milestones/:id/payment", deals.recordPayment);
+router.post("/milestones/:id/payment/confirm", deals.confirmPayment);
+router.get("/people/:id/record", deals.personReviews);
+
+// Account settings
+router.put("/me/handle", deals.setHandle);
+router.post("/me/adult", deals.confirmAdult);
+router.put("/me/privacy", deals.setPrivacy);
+router.post("/me/appeal", deals.appeal);
+
+// Moderation (admin only)
+router.get("/admin/integrity", deals.listIntegrityFlags);
+router.post("/admin/integrity/:id", deals.resolveIntegrityFlag);
+router.post("/admin/users/:id/suspend", deals.suspendUser);
+router.post("/admin/users/:id/unsuspend", deals.unsuspendUser);
 
 router.post("/documents", singleDocument, campus.uploadDocument);
 router.get("/documents/:id", campus.getDocument);

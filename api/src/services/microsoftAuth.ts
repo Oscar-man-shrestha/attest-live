@@ -91,10 +91,10 @@ export async function completeMicrosoftSignIn(code: string, state: string) {
         throw new CampusError(401, "Microsoft did not confirm that sign-in. Try again.");
     }
     if (claims.tid !== campusTenantId) {
-        throw new CampusError(403, `Sign in with your @${CAMPUS_DOMAIN} college account`);
+        throw new CampusError(403, "College Outlook sign-in only works for Amrita accounts. Use the email code instead.");
     }
 
     const email = (claims.email || claims.preferred_username || claims.upn || "").trim().toLowerCase();
-    const result = await signInCampusEmail(email, claims.name);
+    const result = await signInCampusEmail(email, claims.name, "microsoft");
     return { ...result, next: statePayload.next ?? null };
 }

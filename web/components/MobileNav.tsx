@@ -18,7 +18,7 @@ const ITEMS: MobileNavItem[] = [
   { id: "people", label: "People", icon: "group", href: "/people" },
   { id: "problems", label: "Problems", icon: "flag", href: "/problems" },
   { id: "inbox", label: "Inbox", icon: "inbox", href: "/inbox" },
-  { id: "saved", label: "Saved", icon: "bookmark", href: "/saved" },
+  { id: "deals", label: "Deals", icon: "handshake", href: "/deals" },
 ];
 
 export default function MobileNav() {

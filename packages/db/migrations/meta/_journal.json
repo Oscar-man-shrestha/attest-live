@@ -50,6 +50,13 @@
       "when": 1790440000000,
       "tag": "0006_visibility_teaser",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1790450000000,
+      "tag": "0007_marketplace_phase1",
+      "breakpoints": true
     }
   ]
 }

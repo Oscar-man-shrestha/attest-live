@@ -65,7 +65,7 @@ export default function InvitePage() {
         {data.idea.helpNeeded.length > 0 && (
           <p className="text-[12px] text-[#777587]">Needs {data.idea.helpNeeded.join(", ")}</p>
         )}
-        <p className="text-[12px] text-[#777587]">{data.idea.collaboratorCount}/3 seats filled</p>
+        <p className="text-[12px] text-[#777587]">{data.idea.collaboratorCount}/{((data.idea as { teamMax?: number }).teamMax ?? 6) - 1} seats filled</p>
         {data.owner && (
           <div className="flex items-center gap-2 pt-2 border-t border-[#f1f0f7]">
             <Avatar name={data.owner.displayName} size={32} />

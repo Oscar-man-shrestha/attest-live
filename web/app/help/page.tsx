@@ -7,14 +7,14 @@ import { getHelp } from "@/lib/campus-api";
 
 const PATH = [
   { n: "1", title: "Finish your profile", body: "Name, branch, interests, skills, and a two-week line. Cover and projects help owners decide faster.", href: "/profile", label: "Edit profile" },
-  { n: "2", title: "Post an idea or report a problem", body: "Ideas seek teammates. Problems name a campus pain for someone else to own. Different boards, different accents.", href: "/ideas/new", label: "Post idea", secondaryHref: "/problems/new", secondaryLabel: "Report a problem" },
+  { n: "2", title: "Post an idea or report a problem", body: "Ideas seek teammates. Problems name a real pain for someone else to own. Different boards, different accents.", href: "/ideas/new", label: "Post idea", secondaryHref: "/problems/new", secondaryLabel: "Report a problem" },
   { n: "3", title: "Find people and apply", body: "People ranks classmates by skills and circle. Ask with a structured offer — skills, phases, hours — not a free dump of their secrets.", href: "/people", label: "Open People" },
   { n: "4", title: "Decide in Inbox", body: "Fit-ranked requests, day-7 check-ins, and signatures to approve all land in Inbox.", href: "/inbox", label: "Open inbox" },
   { n: "5", title: "Ship and get signed", body: "Workspace tasks → submit → owner signs. Signed lines land on your proof page.", href: "/proof", label: "Open proof" },
 ];
 
 const FALLBACK = [
-  { q: "What is the difference between Ideas and Problems?", a: "Ideas are builds looking for teammates (indigo). Problems are campus pains — you propose an idea to own the fix (amber)." },
+  { q: "What is the difference between Ideas and Problems?", a: "Ideas are builds looking for teammates (indigo). Problems are real pains — you propose an idea to own the fix (amber)." },
   { q: "What is public on an idea?", a: "Owners choose Minimal, Standard, or Open. Approach and contact stay gated unless Open makes approach readable. Full brief unlocks after accept on Minimal cards." },
   { q: "Can I fork an idea?", a: "Yes. Fork starts your own related idea with credit. It only copies the public slice — never private approach notes." },
   { q: "Are there DMs?", a: "No. Invite someone to an idea or send a structured offer. Decisions stay on Attest." },

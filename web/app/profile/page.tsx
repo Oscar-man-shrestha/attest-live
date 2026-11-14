@@ -8,6 +8,7 @@ import { BRANCHES, DEGREES, INTEREST_POOL, SKILL_POOL, TWO_WEEK_EXAMPLES, type D
 import { saveCampusProfile, relatedInterests, branchPopularity, CampusApiError } from "@/lib/campus-api";
 import PickPool from "@/components/campus/PickPool";
 import ProofStep, { type ProofDraft } from "@/components/campus/ProofStep";
+import AccountPanel from "@/components/campus/AccountPanel";
 
 const MIN_INTERESTS = 3;
 const MAX_SKILLS = 8;
@@ -38,6 +39,9 @@ export default function CampusProfilePage() {
   const [skills, setSkills] = useState<string[]>([]);
   const [twoWeekLine, setTwoWeekLine] = useState("");
   const [currentlyWorkingOn, setCurrentlyWorkingOn] = useState("");
+  const [country, setCountry] = useState("");
+  const [city, setCity] = useState("");
+  const [showInstitution, setShowInstitution] = useState(false);
   const [fromRoll, setFromRoll] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [related, setRelated] = useState<Record<string, string[]>>({});
@@ -71,6 +75,9 @@ export default function CampusProfilePage() {
     setSkills(user.campusSkills || []);
     setTwoWeekLine(user.twoWeekLine || "");
     setCurrentlyWorkingOn((user as { currentlyWorkingOn?: string | null }).currentlyWorkingOn || "");
+    setCountry(user.country || "");
+    setCity(user.city || "");
+    setShowInstitution(Boolean(user.showInstitution));
   }, [user]);
 
   useEffect(() => {
@@ -102,6 +109,7 @@ export default function CampusProfilePage() {
   const validate = (at: number) => {
     if (at === 0) {
       if (!displayName.trim()) return "Add your name";
+      if (branch.trim().length < 2) return "Add your branch or discipline";
       if (cgpa && !(Number(cgpa) >= 0 && Number(cgpa) <= 10)) return "CGPA is on a 10-point scale";
       if (graduationYear && !/^20\d{2}$/.test(graduationYear)) return "Graduation year looks wrong";
     }
@@ -140,8 +148,11 @@ export default function CampusProfilePage() {
     try {
       const saved = await saveCampusProfile(token, {
         displayName,
-        branch,
+        branch: branch.trim(),
         semester: Number(semester),
+        country: country.trim() || null,
+        city: city.trim() || null,
+        showInstitution,
         degree,
         graduationYear: graduationYear ? Number(graduationYear) : null,
         cgpa: cgpa ? Number(cgpa) : null,
@@ -166,7 +177,7 @@ export default function CampusProfilePage() {
     }
   };
 
-  const university = user?.university || "Amrita Vishwa Vidyapeetham, Bengaluru";
+  const university = user?.university || "Verified university email";
   const last = STEPS.length - 1;
   const editing = Boolean(user?.profileComplete);
 
@@ -212,8 +223,12 @@ export default function CampusProfilePage() {
             <div className="text-[12px] font-medium">University
               <div className="mt-1 flex items-center justify-between rounded-lg border border-[#e4e2ee] bg-[#f7f7fb] px-3 py-2 text-[14px]">
                 <span>{university}</span>
-                <span className="text-[11px] font-semibold text-[#15803d]">✓ Verified by college email</span>
+                <span className="text-[11px] font-semibold text-[#15803d]">✓ Verified by university email</span>
               </div>
+              <label className="mt-2 flex items-center gap-2 font-normal text-[#464555]">
+                <input type="checkbox" checked={showInstitution} onChange={(e) => setShowInstitution(e.target.checked)} />
+                Show my university to other people. Off by default — they see &ldquo;Verified student&rdquo; instead.
+              </label>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <label className="block text-[12px] font-medium">Degree
@@ -221,15 +236,22 @@ export default function CampusProfilePage() {
                   {DEGREES.map((d) => <option key={d}>{d}</option>)}
                 </select>
               </label>
-              <label className="block text-[12px] font-medium">Branch
-                <select value={branch} onChange={(e) => setBranch(e.target.value)} className={field}>
-                  {BRANCHES.map((code) => <option key={code}>{code}</option>)}
-                </select>
+              <label className="block text-[12px] font-medium">Branch or discipline
+                <input value={branch} list="branch-options" maxLength={40} onChange={(e) => setBranch(e.target.value)} placeholder="CSE, Mechanical, Design…" className={field} />
+                <datalist id="branch-options">
+                  {[...BRANCHES, "Mechanical", "Civil", "Electrical", "Electronics", "Computer Science", "Data Science", "Design", "Business", "Physics", "Biotech"].map((code) => <option key={code} value={code} />)}
+                </datalist>
               </label>
               <label className="block text-[12px] font-medium">Semester
                 <select value={semester} onChange={(e) => setSemester(Number(e.target.value))} className={field}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n} value={n}>{n}</option>)}
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map((n) => <option key={n} value={n}>{n}</option>)}
                 </select>
+              </label>
+              <label className="block text-[12px] font-medium">Country <span className="font-normal text-[#777587]">(optional)</span>
+                <input value={country} maxLength={56} onChange={(e) => setCountry(e.target.value)} placeholder="India, Nepal, Kenya…" className={field} />
+              </label>
+              <label className="block text-[12px] font-medium">City <span className="font-normal text-[#777587]">(optional)</span>
+                <input value={city} maxLength={80} onChange={(e) => setCity(e.target.value)} placeholder="Helps match hardware projects nearby" className={field} />
               </label>
               <label className="block text-[12px] font-medium">Graduation year
                 <input value={graduationYear} inputMode="numeric" maxLength={4} onChange={(e) => setGraduationYear(e.target.value.replace(/\D/g, ""))} placeholder="2027" className={field} />
@@ -259,7 +281,7 @@ export default function CampusProfilePage() {
             <p className="text-[12px] text-[#777587]">A skill is signed only when a teammate signs a task that used it.</p>
             <div className="pt-2 border-t border-[#eceaf4]">
               <label className="block text-[12px] font-medium">What could you build or help with in the next two weeks?
-                <span className="block font-normal text-[#777587] mt-0.5">One or two sentences about the part you could own in a 14-day sprint. Teams read this when you ask to join.</span>
+                <span className="block font-normal text-[#777587] mt-0.5">One or two sentences about the part you could own in two weeks. Teams read this when you ask to join.</span>
                 <textarea
                   value={twoWeekLine}
                   onChange={(e) => setTwoWeekLine(e.target.value)}
@@ -305,6 +327,7 @@ export default function CampusProfilePage() {
           </div>
         </div>
       </div>
+      {token && user && <AccountPanel token={token} />}
     </div>
   );
 }

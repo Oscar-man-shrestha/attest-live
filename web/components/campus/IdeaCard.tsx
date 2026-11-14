@@ -5,6 +5,7 @@ import Link from "next/link";
 import type { FeedIdea, SprintIdea } from "@/lib/campus-api";
 import PostActions from "./PostActions";
 import { Avatar, timeAgo } from "./CommentThread";
+import DealBadge from "./DealBadge";
 
 export type IdeaCardIdea = SprintIdea & Partial<Pick<FeedIdea, "reasons" | "topics">>;
 
@@ -62,7 +63,7 @@ export default function IdeaCard({ idea, token, viewerId, feedCard = false, onNo
               </Link>
             )}
             <p className="text-[12px] text-[#777587]">
-              {idea.authorBranch} · Sem {idea.authorSemester} · {timeAgo(idea.createdAt)}
+              {[idea.authorBranch, idea.authorSemester ? `Sem ${idea.authorSemester}` : null, timeAgo(idea.createdAt)].filter(Boolean).join(" · ")}
             </p>
           </div>
           {feedCard && onNotInterested && (
@@ -88,10 +89,11 @@ export default function IdeaCard({ idea, token, viewerId, feedCard = false, onNo
             {typeof idea.collaboratorCount === "number" && idea.collaboratorCount > 0 && (
               <>
                 <span>·</span>
-                <span>{idea.collaboratorCount}/3 on team</span>
+                <span>{idea.collaboratorCount}/{(idea.teamMax ?? 6) - 1} on team</span>
               </>
             )}
           </p>
+          <DealBadge dealType={idea.dealType} currency={idea.currency} budgetMinor={idea.budgetMinor} licence={idea.licence} />
 
           <Link
             href={`/ideas/${idea.id}`}

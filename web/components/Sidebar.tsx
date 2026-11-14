@@ -34,6 +34,7 @@ export default function Sidebar() {
     { id: "people", label: "People", icon: "group", href: "/people", authRequired: true },
     { id: "problems", label: "Problems", icon: "flag", href: "/problems", hint: "Pains needing a builder" },
     { id: "saved", label: "Saved", icon: "bookmark", href: "/saved", authRequired: true },
+    { id: "deals", label: "Deals", icon: "handshake", href: "/deals", authRequired: true, hint: "Milestones and payments" },
     { id: "inbox", label: "Inbox", icon: "inbox", href: "/inbox" },
     { id: "proof", label: "Proof", icon: "verified", href: "/proof" },
     { id: "reports", label: "Reports", icon: "report", href: "/reports", adminOnly: true },

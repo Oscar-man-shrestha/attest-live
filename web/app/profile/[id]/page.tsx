@@ -4,6 +4,7 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import DealRecord from "@/components/campus/DealRecord";
 import {
   getCampusProfile,
   getProfileIdeas,
@@ -209,11 +210,13 @@ export default function CampusProfilePage() {
             <h1 className="mt-3 text-[24px] font-semibold text-[#141b2b]">{profile.displayName}</h1>
             {profile.headline && <p className="text-[15px] text-[#1f2433]">{profile.headline}</p>}
             {study && <p className="text-[13px] text-[#464555] mt-1">{study}</p>}
-            {profile.university && (
+            {profile.handle && <p className="text-[13px] text-[#777587]">@{profile.handle}</p>}
+            {(profile.university || profile.verifiedStudent) && (
               <p className="text-[13px] text-[#464555]">
-                {profile.university} <span className="text-[11px] font-semibold text-[#15803d]">✓ verified college email</span>
+                {profile.university || "Verified student"} <span className="text-[11px] font-semibold text-[#15803d]">✓ verified university email</span>
               </p>
             )}
+            {(profile.city || profile.country) && <p className="text-[13px] text-[#464555]">{[profile.city, profile.country].filter(Boolean).join(", ")}</p>}
             <p className="text-[12px] text-[#777587] mt-2">
               {profile.followerCount ?? 0} followers · {profile.followingCount ?? 0} following
               {(profile.activityStreak ?? 0) > 0 ? ` · ${profile.activityStreak}-day activity streak` : ""}
@@ -273,6 +276,8 @@ export default function CampusProfilePage() {
             <p className="text-[11px] text-[#777587] mt-1">What they can take on in a two-week sprint</p>
           </Section>
         )}
+
+        {token && <DealRecord token={token} personId={profile.id} self={self} />}
 
         <Section title="Signed contributions">
           {signedTrail.length === 0 ? (
@@ -342,7 +347,7 @@ export default function CampusProfilePage() {
         </Section>
 
         <Section title="Education">
-          <p className="text-[14px] font-semibold">{profile.university || "University not set"}</p>
+          <p className="text-[14px] font-semibold">{profile.university || (profile.verifiedStudent ? "Verified student (university hidden)" : "University not set")}</p>
           <p className="text-[13px] text-[#464555]">{[profile.degree, profile.branch].filter(Boolean).join(", ")}</p>
           {profile.graduationYear && <p className="text-[12px] text-[#777587]">Graduating {profile.graduationYear}</p>}
           {self && profile.cgpa !== null && <p className="text-[12px] text-[#464555] mt-1">CGPA {profile.cgpa.toFixed(2)} <span className="text-[#777587]">· only you and idea owners you apply to see this</span></p>}

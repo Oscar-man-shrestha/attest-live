@@ -9,7 +9,16 @@ import { toPublicUser } from "../services/campusService";
 
 const JWT_SECRET = process.env.JWT_SECRET || "embedra_super_secret_jwt_key_2026";
 
+/**
+ * Legacy password auth is switched off: every account must come through a verified academic email (RULES 1).
+ * The code below is kept for reference but unreachable.
+ */
+const LEGACY_AUTH_DISABLED = true;
+
 export const signup = async (req: Request, res: Response) => {
+    if (LEGACY_AUTH_DISABLED) {
+        return res.status(410).json({ error: "Password sign-up is closed. Sign in with a one-time code to your university email." });
+    }
     try {
         const parseResult = signupSchema.safeParse(req.body);
         if (!parseResult.success) {
@@ -56,6 +65,9 @@ export const signup = async (req: Request, res: Response) => {
 };
 
 export const login = async (req: Request, res: Response) => {
+    if (LEGACY_AUTH_DISABLED) {
+        return res.status(410).json({ error: "Password login is closed. Sign in with a one-time code to your university email." });
+    }
     try {
         const parseResult = loginSchema.safeParse(req.body);
         if (!parseResult.success) {

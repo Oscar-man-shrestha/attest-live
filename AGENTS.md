@@ -52,11 +52,12 @@ embedra/
 6. **Follow DATA.md for schema.** Update DATA.md before migrations/columns.
 7. Prefer `TASKS.md` over old PHASES.md for campus work; do not invent Phase 5 features mid-sprint.
 8. **Slow work is queued/polled**, not awaited inline in handlers (NLP, OCR, mail, GitHub check).
-9. **No DMs, no versioning, no blocking, no idea takedown, no active push notifications, no organizations-as-entities.**
-10. **Community bans** (if any) are one-community only.
+9. **No open DMs, no versioning, no blocking, no idea takedown, no active push notifications, no organizations-as-entities.** Engagement-scoped threads are allowed (MEMORY.md, 2026-11-15).
+10. **Community bans** (if any) are one-community only. Platform suspension is admin-only with a reason and an appeal.
 11. **Owner cannot rate their own idea.** Ratings tenure/freeze rules still apply where ratings exist.
 12. **Contribution / receipt pending until owner signs.**
 13. **All list endpoints are cursor-paginated.**
+14. **Never hold users' money.** No custodial balances, pooled funds or payout routing. Payments are off-platform and only recorded (RULES.md 13–19).
 
 Also see `RULES.md` for product privacy (CGPA, resume deletion, university from email).
 

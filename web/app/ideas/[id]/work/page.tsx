@@ -790,7 +790,7 @@ export default function WorkPage() {
               <input
                 value={inviteEmail}
                 onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="name@bl.students.amrita.edu"
+                placeholder="teammate@university.edu"
                 className="flex-1 rounded-lg border border-[#c7c4d8] px-3 py-1.5 text-[13px] bg-white"
               />
               <button
@@ -872,6 +872,15 @@ export default function WorkPage() {
                     <span className="text-[#ba1a1a] font-medium">Role reopened</span>
                   )}
                 </div>
+                {work.isAuthor && member.role === "collaborator" && !member.leftAt && (
+                  <Link
+                    href={`/deals/new?ideaId=${encodeURIComponent(work.idea.id)}&builderId=${encodeURIComponent(member.userId)}`}
+                    className="inline-flex items-center gap-1 text-[12px] font-semibold text-[#047857] hover:underline"
+                  >
+                    <span className="material-symbols-outlined text-[15px]" aria-hidden>handshake</span>
+                    Propose a deal with {member.name.split(" ")[0] || "this builder"}
+                  </Link>
+                )}
               </div>
             );
           })}
@@ -1091,7 +1100,7 @@ export default function WorkPage() {
                             className="text-[12px] py-0.5 px-1.5 border border-[#c7c4d8] rounded bg-white text-[#141b2b] font-medium focus:outline-none focus:border-[#4f46e5]"
                           >
                             <option value="">(Unassigned)</option>
-                            <option value={work.idea.ownerId}>{nameOf(work.idea.ownerId)} (Author)</option>
+                            <option value={work.idea.ownerId ?? ""}>{nameOf(work.idea.ownerId ?? "")} (Author)</option>
                             {work.roster
                               .filter((m) => !m.leftAt && m.userId !== work.idea.ownerId)
                               .map((c) => (

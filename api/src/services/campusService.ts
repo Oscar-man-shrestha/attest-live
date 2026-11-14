@@ -37,12 +37,17 @@ import {
     teamMembers,
     tryouts,
     users,
+    academicVerifications,
+    integrityFlags,
 } from "../../../packages/db/index";
 import {
-    BRANCHES,
-    CAMPUS_DOMAIN,
+    detectAcademicRequest,
+    emailDomain,
     guessFromRollNumber,
     INTEREST_TILES,
+    isAcademicEmail,
+    isPaidDeal,
+    toMinor,
     universityForEmail,
     VOLUNTEER_SENTENCE,
     suggestBranch,
@@ -84,6 +89,8 @@ type Proposal = {
     isSmall: boolean;
     hourCap?: number | null;
     stage: string;
+    visibility?: "minimal" | "standard" | "open";
+    blurb?: string;
 };
 
 const otpCodes = new Map<string, { code: string; expires: number }>();
@@ -129,7 +136,28 @@ export function toPublicUser(user: UserRow) {
         guess: guessFromRollNumber(user.email),
         isAdmin: user.isAdmin,
         profileComplete: profileComplete(user),
+        handle: user.username,
+        country: user.country,
+        city: user.city,
+        showInstitution: user.showInstitution,
+        isAdult: Boolean(user.adultConfirmedAt),
+        suspended: Boolean(user.suspendedAt),
+        suspendedReason: user.suspendedAt ? user.suspendedReason : null,
+        appealed: Boolean(user.appealedAt),
     };
+}
+
+/** What other users may see of someone's institution (RULES 6). */
+export function institutionFor(user: Pick<UserRow, "university" | "showInstitution">) {
+    return user.showInstitution ? user.university : null;
+}
+
+/** Inline, cheap keyword check. Adds a pending integrity flag for admin review; never blocks the post. */
+export async function flagIfAcademic(targetType: "idea" | "problem" | "engagement", targetId: string, text: string) {
+    const hit = detectAcademicRequest(text);
+    if (!hit) return null;
+    await db.insert(integrityFlags).values({ targetType, targetId, source: "keyword", label: "graded_coursework", matched: hit.matched });
+    return hit;
 }
 
 function profileComplete(user: UserRow) {
@@ -183,9 +211,14 @@ async function requireReady(userId: string) {
     return user;
 }
 
+/** Team size including the owner (was 4; raised to 6 on 2026-11-15). */
+const TEAM_MAX = 6;
+const MAX_COLLABORATORS = TEAM_MAX - 1;
+
+/** Sprints are rolling 14-day build seasons: when one ends, the next starts, so the board never closes. */
 async function ensureSprint() {
     const [existing] = await db.select().from(sprints).orderBy(desc(sprints.createdAt)).limit(1);
-    if (existing) return existing;
+    if (existing && new Date(existing.endsAt) > new Date()) return existing;
     const endsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000);
     const [created] = await db.insert(sprints).values({ endsAt }).returning();
     return created;
@@ -327,7 +360,7 @@ export function publicIdea(
     saved: boolean,
     problemTitle?: string | null,
     forkCount = 0,
-    opts?: { viewerIsMember?: boolean },
+    opts?: { viewerIsMember?: boolean; viewerId?: string },
 ) {
     const visibility = (idea.visibility === "minimal" || idea.visibility === "open" ? idea.visibility : "standard") as "minimal" | "standard" | "open";
     const member = Boolean(opts?.viewerIsMember);
@@ -363,6 +396,11 @@ export function publicIdea(
         hidden: Boolean(idea.hiddenAt),
         saved,
         seatsOpen: idea.teamStatus === "open",
+        teamMax: TEAM_MAX,
+        dealType: idea.dealType,
+        currency: idea.currency,
+        budgetMinor: idea.budgetMinor,
+        licence: idea.licence,
     };
 }
 
@@ -448,6 +486,11 @@ async function insertIdeaRecord(owner: UserRow, fields: {
     duplicateOfId?: string | null;
     forkedFromId?: string | null;
     sprintId: string;
+    dealType?: string;
+    currency?: string | null;
+    budgetMinor?: number | null;
+    licence?: string | null;
+    notAcademicAttestedAt?: Date | null;
 }) {
     const domainId = await campusDomainId();
     const snap = authorLabel(fields.hideName, owner.displayName, owner.branch, owner.semester);
@@ -480,6 +523,11 @@ async function insertIdeaRecord(owner: UserRow, fields: {
         sprintId: fields.sprintId,
         visibility,
         blurb,
+        dealType: fields.dealType ?? "credit_only",
+        currency: fields.currency ?? null,
+        budgetMinor: fields.budgetMinor ?? null,
+        licence: fields.licence ?? null,
+        notAcademicAttestedAt: fields.notAcademicAttestedAt ?? null,
     }).returning();
     const [group] = await db.insert(groups).values({ ideaId: idea.id }).returning();
     await db.insert(groupMembers).values({ groupId: group.id, userId: owner.id });
@@ -544,10 +592,31 @@ export async function verifyCampusCode(email: string, code: string) {
     return signInCampusEmail(normalized);
 }
 
-export async function signInCampusEmail(email: string, fullName?: string | null) {
+/** New accounts get a random handle so a roll number or real name is never the public identity. */
+async function freshHandle() {
+    const words = ["builder", "maker", "tinker", "forge", "spark", "circuit", "pixel", "kernel", "rivet", "signal"];
+    for (let n = 0; n < 8; n += 1) {
+        const handle = `${words[crypto.randomInt(words.length)]}_${crypto.randomInt(1000, 99999)}`;
+        const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.username, handle));
+        if (!taken) return handle;
+    }
+    return `builder_${crypto.randomBytes(5).toString("hex")}`;
+}
+
+async function recordVerification(userId: string, email: string, method: "otp" | "microsoft") {
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
+    await db.insert(academicVerifications).values({ userId, emailDomain: emailDomain(email), method, verifiedAt: now, expiresAt })
+        .onConflictDoUpdate({
+            target: [academicVerifications.userId, academicVerifications.emailDomain],
+            set: { method, verifiedAt: now, expiresAt },
+        });
+}
+
+export async function signInCampusEmail(email: string, fullName?: string | null, method: "otp" | "microsoft" = "otp") {
     const normalized = email.trim().toLowerCase();
-    if (!normalized.endsWith(`@${CAMPUS_DOMAIN}`)) {
-        throw new CampusError(403, `Only @${CAMPUS_DOMAIN} accounts can sign in`);
+    if (!isAcademicEmail(normalized)) {
+        throw new CampusError(403, "Use your university email to sign in (for example .edu, .ac.in or .edu.np)");
     }
     const university = universityForEmail(normalized);
     const guess = guessFromRollNumber(normalized);
@@ -564,13 +633,7 @@ export async function signInCampusEmail(email: string, fullName?: string | null)
             [user] = await db.update(users).set(fill).where(eq(users.id, user.id)).returning();
         }
     } else {
-        const base = normalized.split("@")[0].replace(/[^a-z0-9_]/g, "").slice(0, 24);
-        let username = base.length >= 3 ? base : `student${base}`;
-        for (let n = 0; n < 5; n += 1) {
-            const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.username, username));
-            if (!taken) break;
-            username = `${base.slice(0, 18)}${crypto.randomInt(100, 999)}`;
-        }
+        const username = await freshHandle();
         const passwordHash = await bcrypt.hash(crypto.randomBytes(24).toString("hex"), 10);
         const [created] = await db.insert(users).values({
             username,
@@ -585,6 +648,7 @@ export async function signInCampusEmail(email: string, fullName?: string | null)
         }).returning();
         user = created;
     }
+    await recordVerification(user.id, normalized, method);
 
     const token = jwt.sign(
         { userId: user.id, username: user.username, email: user.email },
@@ -600,14 +664,16 @@ export async function saveProfile(userId: string, input: CampusProfileInput) {
     if (input.interests.some((tile) => !allowedInterests.has(tile))) {
         throw new CampusError(400, "Pick interests from the tiles");
     }
-    if (!BRANCHES.includes(input.branch)) throw new CampusError(400, "Unknown branch");
     const skills = [...new Set(input.skills.map((skill) => skill.trim()).filter(Boolean))];
     if (skills.length > 8) throw new CampusError(400, "Eight skills is the cap");
     const githubChanged = (input.githubUrl || null) !== user.githubUrl;
     const [updated] = await db.update(users).set({
         displayName: input.displayName.trim(),
-        branch: input.branch,
+        branch: input.branch.trim(),
         semester: input.semester,
+        country: input.country === undefined ? user.country : (input.country?.trim() || null),
+        city: input.city === undefined ? user.city : (input.city?.trim() || null),
+        showInstitution: input.showInstitution ?? user.showInstitution,
         campusSkills: skills,
         interests: input.interests,
         twoWeekLine: input.twoWeekLine.trim(),
@@ -694,7 +760,7 @@ export async function getIdea(userId: string, ideaId: string) {
         approach = row ? { body: row.body } : null;
     }
     const collaborators = await activeCollaborators(idea.id);
-    const seatsOpen = idea.teamStatus === "open" && collaborators < 3;
+    const seatsOpen = idea.teamStatus === "open" && collaborators < MAX_COLLABORATORS;
     const images = await listIdeaImages(idea.id);
     const card = {
         ...publicIdea(idea, saved.has(idea.id), problemTitle, forks.get(idea.id) ?? 0, { viewerIsMember: member }),
@@ -808,8 +874,12 @@ export async function createIdea(userId: string, input: CreateSprintIdeaInput) {
     checkBrief(input.pitch, input.gap, input.ships, compensation);
     if (input.isSmall && !input.hourCap) throw new CampusError(400, "A small build needs an hour cap");
     await assertNoDuplicate(input.title, input.pitch);
-    if (!input.contactEmail.toLowerCase().endsWith(`@${CAMPUS_DOMAIN}`)) {
-        throw new CampusError(400, `Contact email must be @${CAMPUS_DOMAIN}`);
+    if (!isAcademicEmail(input.contactEmail)) {
+        throw new CampusError(400, "Contact email must be a university address");
+    }
+    const paid = isPaidDeal(input.dealType);
+    if (paid && !user.adultConfirmedAt) {
+        throw new CampusError(403, "Paid projects need you to confirm you are 18 or older first (Profile → Account)");
     }
     const visibility = input.visibility ?? "standard";
     const blurb = (input.blurb?.trim() || input.pitch.trim().slice(0, 160)).slice(0, 160);
@@ -831,12 +901,18 @@ export async function createIdea(userId: string, input: CreateSprintIdeaInput) {
         visibility,
         blurb,
         sprintId: sprint.id,
+        dealType: input.dealType,
+        currency: paid ? input.currency ?? null : null,
+        budgetMinor: paid && input.budget ? toMinor(input.budget) : null,
+        licence: input.dealType === "open_source" ? input.licence ?? null : null,
+        notAcademicAttestedAt: new Date(),
     });
     await db.insert(approaches).values({
         ideaId: idea.id,
         body: input.approach.trim(),
         contactEmail: input.contactEmail.trim().toLowerCase(),
     });
+    await flagIfAcademic("idea", idea.id, [input.title, input.pitch, input.ships, input.approach, input.blurb ?? ""].join("\n"));
     ideaCreateAt.set(user.id, Date.now());
     return { idea: publicIdea(idea, false, null, 0, { viewerIsMember: true }) };
 }
@@ -922,12 +998,14 @@ export async function createProblem(userId: string, input: CreateProblemInput) {
         authorBranch: snap.authorBranch,
         authorSemester: snap.authorSemester,
         hideName: input.hideName,
+        notAcademicAttestedAt: new Date(),
     }).returning();
     await db.insert(approaches).values({
         problemId: problem.id,
         body: input.approach.trim(),
         contactEmail: input.contactEmail.trim().toLowerCase(),
     });
+    await flagIfAcademic("problem", problem.id, [input.title, input.whatHappens, input.fixWouldChange, input.approach].join("\n"));
     return { problem: publicProblem(problem, false, null, false, user.id) };
 }
 
@@ -986,7 +1064,7 @@ export async function createOffer(userId: string, input: {
         if (idea.teamStatus === "shipped") throw new CampusError(400, "This idea has shipped");
         if (idea.teamStatus !== "open") throw new CampusError(400, "This team is not open for new requests");
         const collaborators = await activeCollaborators(idea.id);
-        if (collaborators >= 3) throw new CampusError(400, "This team is full");
+        if (collaborators >= MAX_COLLABORATORS) throw new CampusError(400, "This team is full");
         if (idea.isSmall && idea.hourCap && input.hoursPerWeek > idea.hourCap) {
             throw new CampusError(400, `This build caps hours at ${idea.hourCap}`);
         }
@@ -1074,7 +1152,7 @@ export async function getOffer(userId: string, offerId: string) {
         semester: builder.semester,
         twoWeekLine: builder.twoWeekLine,
         skills: (builder.campusSkills ?? []).map((name) => ({ name, signed: signed.has(name.toLowerCase()) })),
-        university: builder.university,
+        university: institutionFor(builder),
         degree: builder.degree,
         graduationYear: builder.graduationYear,
         cgpa: builder.cgpa === null ? null : Number(builder.cgpa),
@@ -1125,7 +1203,7 @@ async function signedSkillNames(userId: string) {
 
 async function addCollaborator(ideaId: string, userId: string) {
     const collaborators = await activeCollaborators(ideaId);
-    if (collaborators >= 3) throw new CampusError(400, "This team already has four people");
+    if (collaborators >= MAX_COLLABORATORS) throw new CampusError(400, `This team already has ${TEAM_MAX} people`);
     const [idea] = await db.select().from(ideas).where(eq(ideas.id, ideaId));
     if (idea && idea.ownerId === userId) throw new CampusError(400, "The author is already on the team");
     const [existing] = await db.select().from(teamMembers).where(and(eq(teamMembers.ideaId, ideaId), eq(teamMembers.userId, userId)));
@@ -1886,7 +1964,7 @@ export async function inviteMember(userId: string, ideaId: string, email: string
     if (idea.ownerId !== userId) throw new CampusError(403, "Only the author can invite");
     const sprint = await ensureSprint();
     if (new Date() > new Date(sprint.endsAt)) throw new CampusError(400, "This sprint is no longer taking requests");
-    if (await activeCollaborators(idea.id) >= 3) throw new CampusError(400, "This team already has four people");
+    if (await activeCollaborators(idea.id) >= MAX_COLLABORATORS) throw new CampusError(400, `This team already has ${TEAM_MAX} people`);
     const normalized = email.trim().toLowerCase();
     const [pending] = await db.select().from(sprintInvites).where(and(
         eq(sprintInvites.ideaId, idea.id),
@@ -1930,7 +2008,7 @@ export async function getInvite(userId: string, inviteId: string) {
             stage: idea.stage,
             teamStatus: idea.teamStatus,
             helpNeeded: idea.helpNeeded ?? [],
-            seatsOpen: idea.teamStatus === "open" && collaborators < 3,
+            seatsOpen: idea.teamStatus === "open" && collaborators < MAX_COLLABORATORS,
             collaboratorCount: collaborators,
         },
         owner: owner ? {
@@ -2251,7 +2329,7 @@ export async function listSaved(userId: string, cursor?: string) {
 }
 
 const HELP = [
-    { q: "Who can sign in?", a: "A student mailbox at @bl.students.amrita.edu. Sign in with your college Outlook account. The first sign-in creates the account. There is no separate signup." },
+    { q: "Who can sign in?", a: "Anyone with a university email anywhere in the world (.edu, .ac.in, .edu.np and similar). We send a one-time code; the first sign-in creates the account. Amrita students can also use college Outlook. Attest is not affiliated with any university, and your university stays hidden unless you choose to show it." },
     { q: "How do I get from empty to shipping?", a: "Finish your profile → post an idea or a problem → ask classmates on People or wait for offers → accept one teammate → open the workspace → submit a task → the owner signs it → it lands on your proof page." },
     { q: "What is public on an idea?", a: "Owners choose visibility. Minimal shows a short teaser and roles. Standard also shows the full brief. Open can show the approach text campus-wide. Contact email and workspace stay for accepted teammates. First published time is always shown so authorship is clear." },
     { q: "What is the difference between Ideas and Problems?", a: "Ideas are builds looking for teammates. Problems are campus pains — you propose an idea to own the fix. Ideas use indigo; Problems use amber so the boards stay distinct." },

@@ -43,8 +43,27 @@ export const users = pgTable("users", {
     coverUrl: text("cover_url"),
     currentlyWorkingOn: text("currently_working_on"),
     isAdmin: boolean("is_admin").default(false).notNull(),
+    country: text("country"),
+    city: text("city"),
+    showInstitution: boolean("show_institution").default(false).notNull(),
+    adultConfirmedAt: timestamp("adult_confirmed_at"),
+    suspendedAt: timestamp("suspended_at"),
+    suspendedReason: text("suspended_reason"),
+    suspensionAppeal: text("suspension_appeal"),
+    appealedAt: timestamp("appealed_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const academicVerifications = pgTable("academic_verifications", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id").notNull().references(() => users.id),
+    emailDomain: text("email_domain").notNull(),
+    method: text("method").notNull(),
+    verifiedAt: timestamp("verified_at").defaultNow().notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+}, (t) => ({
+    uniqUserDomain: unique("academic_verifications_user_domain_unique").on(t.userId, t.emailDomain),
+}));
 
 // ---------- SKILLS / DOMAINS (fixed lookups) ----------
 export const skills = pgTable("skills", {
@@ -124,6 +143,12 @@ export const ideas = pgTable("ideas", {
     hiddenAt: timestamp("hidden_at"),
     visibility: text("visibility").default("standard").notNull(),
     blurb: text("blurb"),
+    dealType: text("deal_type").default("credit_only").notNull(),
+    currency: text("currency"),
+    budgetMinor: integer("budget_minor"),
+    licence: text("licence"),
+    notAcademicAttestedAt: timestamp("not_academic_attested_at"),
+    integrityCheckedAt: timestamp("integrity_checked_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -241,6 +266,8 @@ export const problems = pgTable("problems", {
     hideName: boolean("hide_name").default(false).notNull(),
     freshLine: text("fresh_line"),
     hiddenAt: timestamp("hidden_at"),
+    notAcademicAttestedAt: timestamp("not_academic_attested_at"),
+    integrityCheckedAt: timestamp("integrity_checked_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -396,6 +423,104 @@ export const documents = pgTable("documents", {
     parsedAt: timestamp("parsed_at"),
 }, (t) => ({
     byStatus: index("documents_status_created_idx").on(t.status, t.createdAt),
+}));
+
+// ---------- MARKETPLACE PHASE 1 (no money held; see DATA.md) ----------
+export const engagements = pgTable("engagements", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    ideaId: uuid("idea_id").notNull().references(() => ideas.id),
+    requesterId: uuid("requester_id").notNull().references(() => users.id),
+    builderId: uuid("builder_id").notNull().references(() => users.id),
+    dealType: text("deal_type").notNull(),
+    currency: text("currency"),
+    totalAmountMinor: integer("total_amount_minor").default(0).notNull(),
+    licence: text("licence"),
+    ipTerms: text("ip_terms").notNull(),
+    nda: boolean("nda").default(false).notNull(),
+    notAcademicAttestedAt: timestamp("not_academic_attested_at").notNull(),
+    status: text("status").default("proposed").notNull(),
+    builderAcceptedAt: timestamp("builder_accepted_at"),
+    completedAt: timestamp("completed_at"),
+    cancelledAt: timestamp("cancelled_at"),
+    cancelReason: text("cancel_reason"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+    byBuilder: index("engagements_builder_status_idx").on(t.builderId, t.status),
+    byRequester: index("engagements_requester_status_idx").on(t.requesterId, t.status),
+}));
+
+export const milestones = pgTable("milestones", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    engagementId: uuid("engagement_id").notNull().references(() => engagements.id),
+    position: integer("position").notNull(),
+    title: text("title").notNull(),
+    amountMinor: integer("amount_minor").default(0).notNull(),
+    dueAt: timestamp("due_at"),
+    status: text("status").default("open").notNull(),
+    deliverableLinks: jsonb("deliverable_links").$type<string[]>().default([]).notNull(),
+    note: text("note"),
+    submittedAt: timestamp("submitted_at"),
+    acceptanceDeadline: timestamp("acceptance_deadline"),
+    acceptedAt: timestamp("accepted_at"),
+    disputedAt: timestamp("disputed_at"),
+    disputeReason: text("dispute_reason"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+    byEngagement: index("milestones_engagement_idx").on(t.engagementId, t.position),
+    byDeadline: index("milestones_deadline_idx").on(t.status, t.acceptanceDeadline),
+}));
+
+export const paymentConfirmations = pgTable("payment_confirmations", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    milestoneId: uuid("milestone_id").notNull().unique().references(() => milestones.id),
+    method: text("method").notNull(),
+    externalReference: text("external_reference"),
+    payerConfirmedAt: timestamp("payer_confirmed_at"),
+    payeeConfirmedAt: timestamp("payee_confirmed_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const reviews = pgTable("reviews", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    engagementId: uuid("engagement_id").notNull().references(() => engagements.id),
+    reviewerId: uuid("reviewer_id").notNull().references(() => users.id),
+    revieweeId: uuid("reviewee_id").notNull().references(() => users.id),
+    onTime: integer("on_time").notNull(),
+    communication: integer("communication").notNull(),
+    quality: integer("quality").notNull(),
+    wouldWorkAgain: boolean("would_work_again").notNull(),
+    note: text("note"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+    uniqReviewer: unique("reviews_engagement_reviewer_unique").on(t.engagementId, t.reviewerId),
+    byReviewee: index("reviews_reviewee_idx").on(t.revieweeId),
+}));
+
+export const engagementMessages = pgTable("engagement_messages", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    engagementId: uuid("engagement_id").notNull().references(() => engagements.id),
+    userId: uuid("user_id").notNull().references(() => users.id),
+    body: text("body").notNull(),
+    flag: text("flag"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+    byThread: index("engagement_messages_thread_idx").on(t.engagementId, t.createdAt),
+}));
+
+export const integrityFlags = pgTable("integrity_flags", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    targetType: text("target_type").notNull(),
+    targetId: uuid("target_id").notNull(),
+    source: text("source").notNull(),
+    label: text("label").notNull(),
+    score: numeric("score", { precision: 5, scale: 4 }),
+    matched: text("matched"),
+    status: text("status").default("pending").notNull(),
+    reviewerId: uuid("reviewer_id").references(() => users.id),
+    reviewedAt: timestamp("reviewed_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+    byStatus: index("integrity_flags_status_idx").on(t.status, t.createdAt),
 }));
 
 // ---------- REPORTS ----------

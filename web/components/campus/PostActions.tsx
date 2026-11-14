@@ -11,7 +11,7 @@ type Props = {
     id: string;
     title: string;
     pitch: string | null;
-    ownerId: string;
+    ownerId: string | null;
     saved: boolean;
     forkCount?: number;
     engagement?: Engagement;

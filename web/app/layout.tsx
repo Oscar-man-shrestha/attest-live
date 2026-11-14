@@ -21,8 +21,8 @@ import { AuthProvider } from "@/lib/auth-context";
 import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
-  title: "Attest — Campus sprint",
-  description: "Post ideas and campus problems, find classmates, ship in 14 days, keep signed proof",
+  title: "Attest — student builds, paid or for proof",
+  description: "Students anywhere team up on real software and hardware projects — paid, sponsored, open source or for proof — with a signed record of who built what.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

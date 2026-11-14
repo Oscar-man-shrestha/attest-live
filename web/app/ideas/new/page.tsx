@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import {
+  confirmAdult,
   createSprintIdea,
   draftText,
   uploadDocument,
@@ -14,6 +15,15 @@ import {
 } from "@/lib/campus-api";
 import { resizeImage } from "@/lib/resize-image";
 import EmptyState from "@/components/campus/EmptyState";
+import { CURRENCIES, DEAL_TYPE_LABELS, DEAL_TYPES, LICENCES, detectAcademicRequest, isAcademicEmail, isPaidDeal, type DealType } from "@embedra/types";
+
+const DEAL_HELP: Record<DealType, string> = {
+  paid_fixed: "You pay builders a fixed amount per milestone, directly (UPI, bank, Payoneer, Wise…). Attest never holds the money.",
+  sponsor_stipend: "A sponsor (club, company, NGO) funds a stipend for the builders. Still paid directly, milestone by milestone.",
+  open_source: "The work is public under an open licence. Builders get credit and signed proof.",
+  co_owned: "Builders become co-owners. Write the split in the compensation sentence; get it in writing before you start.",
+  credit_only: "No money and no ownership. Builders get credit and signed proof only.",
+};
 
 const empty = {
   title: "",
@@ -31,6 +41,11 @@ const empty = {
   visibility: "standard" as "minimal" | "standard" | "open",
   approach: "",
   contactEmail: "",
+  dealType: "credit_only" as DealType,
+  currency: "INR",
+  budget: "",
+  licence: "MIT",
+  notAcademicWork: false,
 };
 
 const MIN: Partial<Record<keyof typeof empty, number>> = {
@@ -84,7 +99,7 @@ function labelFor(key: string) {
 }
 
 export default function NewSprintIdeaPage() {
-  const { user, token, isLoading } = useAuth();
+  const { user, token, isLoading, setCurrentUser } = useAuth();
   const router = useRouter();
   const [form, setForm] = useState(empty);
   const [error, setError] = useState<string | null>(null);
@@ -158,8 +173,17 @@ export default function NewSprintIdeaPage() {
     event.preventDefault();
     if (!token) return;
     const contactEmail = (form.contactEmail.trim() || user?.email || "").trim().toLowerCase();
-    if (!contactEmail.endsWith("@bl.students.amrita.edu")) {
-      setError("Contact email must be your @bl.students.amrita.edu address");
+    if (!isAcademicEmail(contactEmail)) {
+      setError("Contact email must be a university address");
+      return;
+    }
+    if (!form.notAcademicWork) {
+      setError("Confirm this is not graded coursework, an exam, or an assignment");
+      return;
+    }
+    const paid = isPaidDeal(form.dealType);
+    if (paid && !(Number(form.budget) > 0)) {
+      setError("Add a budget for a paid project");
       return;
     }
     setBusy(true);
@@ -181,6 +205,11 @@ export default function NewSprintIdeaPage() {
         visibility: form.visibility,
         approach: form.approach.trim(),
         contactEmail,
+        dealType: form.dealType,
+        currency: paid ? form.currency : null,
+        budget: paid ? Number(form.budget) : null,
+        licence: form.dealType === "open_source" ? form.licence : null,
+        notAcademicWork: true,
       });
       for (const file of pendingImages.slice(0, 3)) {
         const resized = await resizeImage(file);
@@ -224,10 +253,10 @@ export default function NewSprintIdeaPage() {
 
   return (
     <div className="px-5 sm:px-8 py-6 max-w-3xl mx-auto">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#4f46e5]">14-day sprint</p>
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#4f46e5]">Post a project</p>
       <h1 className="font-serif text-[34px] font-semibold tracking-tight">Post an idea</h1>
       <p className="text-[14px] text-[#464555] mt-1">
-        Share the need and outcome so classmates can decide whether to help. Keep any secret implementation detail out of the public brief. Your approach stays private until you accept someone, unless you pick Open.
+        Share the need and the outcome so student builders anywhere can decide whether to help. Keep any secret implementation detail out of the public brief. Your approach stays private until you accept someone, unless you pick Open.
       </p>
       <form onSubmit={submit} className="mt-5 space-y-4">
         <section className="bg-white rounded-2xl p-5 space-y-3 border border-[#eceaf4] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
@@ -292,7 +321,72 @@ export default function NewSprintIdeaPage() {
         </section>
 
         <section className="bg-white rounded-2xl p-5 space-y-3 border border-[#eceaf4] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-          <p className="text-[12px] font-semibold uppercase tracking-wider text-[#777587]">3 · Photos · 1 hero + up to 2 figures</p>
+          <p className="text-[12px] font-semibold uppercase tracking-wider text-[#777587]">3 · How builders are rewarded</p>
+          <fieldset className="grid sm:grid-cols-2 gap-2">
+            <legend className="sr-only">Deal type</legend>
+            {DEAL_TYPES.map((type) => (
+              <label
+                key={type}
+                className={`flex items-start gap-2 rounded-xl border px-3 py-2 text-[13px] cursor-pointer ${form.dealType === type ? "border-[#4f46e5] bg-[#f8f9ff]" : "border-[#e4e2ee]"}`}
+              >
+                <input type="radio" name="dealType" checked={form.dealType === type} onChange={() => set("dealType", type)} className="mt-1" />
+                <span>
+                  <span className="font-semibold text-[#1b1b24]">{DEAL_TYPE_LABELS[type]}</span>
+                  <span className="block text-[12px] text-[#777587]">{DEAL_HELP[type]}</span>
+                </span>
+              </label>
+            ))}
+          </fieldset>
+          {isPaidDeal(form.dealType) && (
+            <div className="space-y-2">
+              <div className="flex gap-2">
+                <label className="block text-[12px] font-medium text-[#464555]">
+                  Currency
+                  <select value={form.currency} onChange={(e) => set("currency", e.target.value)} className="mt-1 block rounded-lg border border-[#c7c4d8] px-2 py-2 text-[14px]">
+                    {CURRENCIES.map((code) => <option key={code}>{code}</option>)}
+                  </select>
+                </label>
+                <label className="block flex-1 text-[12px] font-medium text-[#464555]">
+                  Total budget
+                  <input type="number" min="1" step="any" inputMode="decimal" value={form.budget} onChange={(e) => set("budget", e.target.value)} className="mt-1 w-full rounded-lg border border-[#c7c4d8] px-3 py-2 text-[14px]" placeholder="5000" />
+                </label>
+              </div>
+              <p className="text-[12px] text-[#777587]">You split this into milestones when you make a deal with a builder. Builders pay Attest nothing.</p>
+              {!user.isAdult && (
+                <div className="rounded-xl bg-[#fffbeb] border border-[#fde68a] p-3 text-[12px] text-[#78350f]">
+                  Paid projects need both sides to be 18 or older.{" "}
+                  <button
+                    type="button"
+                    className="font-semibold underline"
+                    onClick={async () => {
+                      if (!token) return;
+                      try {
+                        await confirmAdult(token);
+                        setCurrentUser({ ...user, isAdult: true });
+                      } catch (err) {
+                        setError(err instanceof CampusApiError ? err.message : "Could not save");
+                      }
+                    }}
+                  >
+                    I confirm I am 18 or older
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          {form.dealType === "open_source" && (
+            <label className="block text-[12px] font-medium text-[#464555]">
+              Licence
+              <select value={form.licence} onChange={(e) => set("licence", e.target.value)} className="mt-1 block rounded-lg border border-[#c7c4d8] px-2 py-2 text-[14px]">
+                {LICENCES.map((code) => <option key={code}>{code}</option>)}
+              </select>
+              <span className="mt-1 block text-[11px] font-normal text-[#777587]">MIT or Apache-2.0 for code; CERN-OHL for hardware.</span>
+            </label>
+          )}
+        </section>
+
+        <section className="bg-white rounded-2xl p-5 space-y-3 border border-[#eceaf4] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
+          <p className="text-[12px] font-semibold uppercase tracking-wider text-[#777587]">4 · Photos · 1 hero + up to 2 figures</p>
           <p className="text-[12px] text-[#777587]">PNG, JPG or WebP. Large photos are compressed before upload. First image is the feed hero.</p>
           <input
             ref={imageInput}
@@ -337,21 +431,34 @@ export default function NewSprintIdeaPage() {
         </section>
 
         <section className="bg-white rounded-2xl p-5 space-y-3 border border-[#e0e7ff] shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
-          <p className="text-[12px] font-semibold uppercase tracking-wider text-[#4f46e5]">4 · Private until accept</p>
+          <p className="text-[12px] font-semibold uppercase tracking-wider text-[#4f46e5]">5 · Private until accept</p>
           {field("approach", "Approach — how you plan to build it", true)}
           <label className="block text-[12px] font-medium text-[#464555]">
-            Contact email (@bl.students.amrita.edu)
+            Contact email (your university address)
             <input
               type="email"
               value={form.contactEmail}
               onChange={(e) => set("contactEmail", e.target.value)}
-              placeholder={user?.email || "you@bl.students.amrita.edu"}
+              placeholder={user?.email || "you@university.edu"}
               className="mt-1 w-full rounded-lg border border-[#c7c4d8] px-3 py-2 text-[14px]"
             />
             <span className="mt-1 block text-[11px] font-normal text-[#777587]">
               Teammates see this only after you accept them. Defaults to your login email.
             </span>
           </label>
+        </section>
+
+        <section className="rounded-2xl p-4 border border-[#e4e2ee] bg-[#fafafa] space-y-2">
+          <label className="flex items-start gap-2 text-[13px] text-[#1b1b24]">
+            <input type="checkbox" checked={form.notAcademicWork} onChange={(e) => set("notAcademicWork", e.target.checked)} className="mt-1" />
+            <span>
+              This is not graded coursework, an exam, or an assignment.
+              <span className="block text-[12px] text-[#777587]">Attest is for real projects. Capstones are fine only as open collaboration your instructor knows about — never as paid work you hand in.</span>
+            </span>
+          </label>
+          {detectAcademicRequest(`${form.title}\n${form.pitch}\n${form.ships}\n${form.approach}`) && (
+            <p className="text-[12px] text-[#92400e]">This reads like coursework. If it is, please don&apos;t post it here — posts like this are reviewed by a moderator.</p>
+          )}
         </section>
 
         {error && <p className="text-[13px] text-[#ba1a1a]">{error}</p>}

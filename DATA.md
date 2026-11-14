@@ -381,3 +381,142 @@ Unique on (user_id, target_type, target_id); index on (target_type, target_id). 
 | deleted_at | timestamp, nullable | Set when the comment author or idea owner deletes it. A deleted comment with replies shows as "Comment deleted"; one without replies is left out |
 
 Sprint comments are one level deep: a reply to a reply is stored under the same top-level comment. Index on (idea_id, parent_comment_id, created_at). A student can post at most 20 comments in 10 minutes. Shares are `interactions` rows of kind `share`, at most one per student per idea per 30 minutes; the share count is public.
+## Marketplace Phase 1 (added 2026-11-15)
+
+Decisions are in MEMORY.md ("Marketplace Phase 1 decision"). Attest never holds money: these tables only record deals, milestones and off-platform payments. Amounts are integer minor units (paise, cents) with an ISO 4217 `currency`.
+
+### users (added columns)
+| Column | Type | Notes |
+|---|---|---|
+| username | text, unique (existing) | Now the public **handle**. New accounts get a random handle; `^[a-z0-9_]{3,24}$`; renameable while unique |
+| branch | text, nullable (existing) | Now free text up to 40 chars (discipline). The six Amrita codes stay as suggestions |
+| semester | int, nullable (existing) | Range widened to 1–12 |
+| country | text, nullable | ISO country name or code, free text up to 56 |
+| city | text, nullable | Up to 80. Used later for hardware locality |
+| show_institution | boolean, default false | When false, other users see "Verified student" instead of `university` |
+| adult_confirmed_at | timestamp, nullable | Self-confirmation of 18+. Required for paid deal types |
+| suspended_at | timestamp, nullable | Admin platform suspension. Suspended users can read and appeal but not write |
+| suspended_reason | text, nullable | Required when suspended |
+| suspension_appeal | text, nullable | User's appeal, up to 2000 chars |
+| appealed_at | timestamp, nullable | |
+
+### academic_verifications
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, PK | |
+| user_id | uuid, FK users | |
+| email_domain | text | Domain of the verified address |
+| method | text | `otp` or `microsoft` |
+| verified_at | timestamp | Refreshed on every sign-in |
+| expires_at | timestamp | verified_at + 365 days |
+
+Unique on (user_id, email_domain).
+
+### ideas (added columns)
+| Column | Type | Notes |
+|---|---|---|
+| deal_type | text, default `credit_only` | `paid_fixed`, `sponsor_stipend`, `open_source`, `co_owned`, `credit_only` |
+| currency | text, nullable | Required for paid types. ISO 4217, e.g. INR, NPR, USD |
+| budget_minor | int, nullable | Required (> 0) for paid types |
+| licence | text, nullable | Required for `open_source` (e.g. MIT, Apache-2.0, CERN-OHL-S) |
+| not_academic_attested_at | timestamp, nullable | Set when the poster confirms this is not graded coursework |
+| integrity_checked_at | timestamp, nullable | Set by the integrity worker |
+
+### problems (added columns)
+| Column | Type | Notes |
+|---|---|---|
+| not_academic_attested_at | timestamp, nullable | As on ideas |
+| integrity_checked_at | timestamp, nullable | As on ideas |
+
+### engagements
+One deal between an idea owner (requester) and one active team member (builder).
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, PK | |
+| idea_id | uuid, FK ideas | |
+| requester_id | uuid, FK users | Idea owner |
+| builder_id | uuid, FK users | Must be an active team member, never the requester |
+| deal_type | text | Same enum as ideas |
+| currency | text, nullable | Required for paid types |
+| total_amount_minor | int, default 0 | Sum of milestone amounts |
+| licence | text, nullable | Required for open_source |
+| ip_terms | text | Default: IP moves to the requester milestone by milestone, on confirmed payment; builder keeps portfolio rights |
+| nda | boolean, default false | |
+| not_academic_attested_at | timestamp | Required |
+| status | text, default `proposed` | `proposed`, `active`, `completed`, `cancelled` |
+| builder_accepted_at, completed_at, cancelled_at | timestamp, nullable | |
+| cancel_reason | text, nullable | |
+| created_at | timestamp | |
+
+Index on (builder_id, status) and (requester_id, status). A builder can hold at most 2 `active` paid engagements.
+
+### milestones
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, PK | |
+| engagement_id | uuid, FK engagements | |
+| position | int | 1-based order |
+| title | text | 3–140 chars |
+| amount_minor | int, default 0 | 0 for unpaid deals |
+| due_at | timestamp, nullable | |
+| status | text, default `open` | `open`, `submitted`, `accepted`, `auto_accepted`, `disputed`, `payment_confirmed` |
+| deliverable_links | jsonb string array | 1–6 links on submit |
+| note | text, nullable | Builder's submit note |
+| submitted_at, acceptance_deadline, accepted_at, disputed_at | timestamp, nullable | Deadline = submitted_at + 7 days; the worker auto-accepts after it |
+| dispute_reason | text, nullable | |
+| created_at | timestamp | |
+
+At most 8 milestones per engagement.
+
+### payment_confirmations
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, PK | |
+| milestone_id | uuid, FK milestones, unique | |
+| method | text | `upi`, `bank_transfer`, `razorpay_link`, `payoneer`, `wise`, `paypal`, `cash`, `other` |
+| external_reference | text, nullable | Receipt or transaction ID only, ≤ 80 chars. Never an account, card or UPI number |
+| payer_confirmed_at | timestamp, nullable | Requester says they paid |
+| payee_confirmed_at | timestamp, nullable | Builder says they received it; sets the milestone to `payment_confirmed` |
+| created_at | timestamp | |
+
+### reviews
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, PK | |
+| engagement_id | uuid, FK engagements | Must be `completed` |
+| reviewer_id, reviewee_id | uuid, FK users | The two parties |
+| on_time, communication, quality | int | 1–5 |
+| would_work_again | boolean | |
+| note | text, nullable | ≤ 500 chars, shown with the review |
+| created_at | timestamp | |
+
+Unique on (engagement_id, reviewer_id). A review is visible only when both parties have reviewed or 14 days have passed since `completed_at`. Profiles show counts per score, never an average.
+
+### engagement_messages
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, PK | |
+| engagement_id | uuid, FK engagements | Only the two parties read or write |
+| user_id | uuid, FK users | |
+| body | text | 1–2000 chars |
+| flag | text, nullable | `contact_details` when a payment handle, phone number or email is detected |
+| created_at | timestamp | |
+
+Index on (engagement_id, created_at). Cursor-paginated. Read-only once the engagement is completed or cancelled.
+
+### integrity_flags
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, PK | |
+| target_type | text | `idea`, `problem`, `engagement` |
+| target_id | uuid | |
+| source | text | `keyword` or `model` |
+| label | text | e.g. `graded_coursework` |
+| score | numeric(5,4), nullable | Model similarity |
+| matched | text, nullable | The phrase that matched, ≤ 200 chars |
+| status | text, default `pending` | `pending`, `cleared`, `confirmed` |
+| reviewer_id | uuid, FK users, nullable | |
+| reviewed_at | timestamp, nullable | |
+| created_at | timestamp | |
+
+Index on (status, created_at). A confirmed flag hides the post (`hidden_at`); it never suspends automatically.

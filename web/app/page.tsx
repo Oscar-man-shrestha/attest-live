@@ -37,31 +37,25 @@ export default function HomePage() {
         />
         <div className="relative mx-auto max-w-5xl px-5 py-16 sm:py-24">
           <p className="animate-rise text-[11px] font-semibold uppercase tracking-[0.2em] text-[#4f46e5]">
-            Campus sprint · 14 days
+            Real projects · paid or for proof
           </p>
           <h1 className="animate-rise delay-1 mt-4 font-serif text-[52px] sm:text-[72px] font-semibold leading-[0.95] tracking-tight text-[#141b2b]">
             Attest
           </h1>
           <p className="animate-rise delay-2 mt-5 max-w-xl text-[18px] sm:text-[20px] leading-relaxed text-[#464555]">
-            Post an idea or a campus problem, find classmates who can actually help, ship something small, and keep a signed trail of what you did.
+            Students anywhere team up on real software and hardware projects — paid, sponsored, open source, or just for proof — and keep a signed record of who built what.
           </p>
-          <p className="mt-4 max-w-xl text-[14px] leading-relaxed text-[#464555]">Have a need but no technical plan? Report a Problem. Have a two-week build in mind? Post an Idea with open roles. You can also join a team and prove your contribution.</p>
+          <p className="mt-4 max-w-xl text-[14px] leading-relaxed text-[#464555]">Good at ideas but not the build? Post a project and pay builders milestone by milestone, or offer credit. Good at building? Earn from your skills and collect proof clients can check. Builders never pay a fee, and Attest never holds your money.</p>
           <div className="animate-rise delay-3 mt-9 flex flex-wrap gap-3">
             <Link
               href="/login"
               className="inline-flex items-center gap-2 rounded-lg bg-[#141b2b] px-5 py-3 text-[14px] font-semibold text-white transition-transform duration-150 hover:bg-[#2a3142] active:scale-[0.98]"
             >
-              Continue with college Outlook
-            </Link>
-            <Link
-              href="/login"
-              className="inline-flex items-center rounded-lg border border-[#c7c4d8] bg-white/80 backdrop-blur px-5 py-3 text-[14px] font-semibold text-[#141b2b] transition-colors hover:bg-white"
-            >
-              Or get a code by email
+              Sign in with your university email
             </Link>
           </div>
           <p className="animate-rise delay-3 mt-4 text-[13px] text-[#777587]">
-            Only @bl.students.amrita.edu. Attest is not a university product.
+            Any university email, worldwide. Attest is not affiliated with any university, and it is not for graded coursework.
           </p>
         </div>
       </section>
@@ -81,7 +75,7 @@ export default function HomePage() {
           <p className="text-[11px] font-semibold uppercase tracking-wider text-[#b45309]">Problems</p>
           <h2 className="mt-2 font-serif text-[24px] font-semibold text-[#141b2b]">Pains needing a builder</h2>
           <p className="mt-2 text-[14px] leading-relaxed text-[#464555]">
-            Name a campus pain in concrete terms. A builder can propose an idea; you keep source credit and choose whether to join the team.
+            Name a real pain in concrete terms. A builder can propose an idea; you keep source credit and choose whether to join the team.
           </p>
           <Link href="/login" className="mt-5 inline-flex text-[13px] font-semibold text-[#b45309]">
             Report a problem →
@@ -91,9 +85,9 @@ export default function HomePage() {
       <section className="mx-auto max-w-5xl px-5 pb-16">
         <h2 className="font-serif text-[26px] font-semibold text-[#141b2b]">From a need to something real</h2>
         <div className="mt-5 grid gap-4 sm:grid-cols-3 text-[14px] text-[#464555]">
-          <div><p className="font-semibold text-[#141b2b]">1. Find your role</p><p className="mt-1">Browse campus Problems and Ideas, then offer a specific contribution you can make.</p></div>
-          <div><p className="font-semibold text-[#141b2b]">2. Build for two weeks</p><p className="mt-1">Agree on a first task, share progress, and produce a prototype, test, or useful finding.</p></div>
-          <div><p className="font-semibold text-[#141b2b]">3. Show your work</p><p className="mt-1">A teammate signs submitted work before it appears as proof. Likes are appreciation, not proof.</p></div>
+          <div><p className="font-semibold text-[#141b2b]">1. Find your role</p><p className="mt-1">Browse Problems and Ideas from students anywhere, then offer a specific contribution you can make.</p></div>
+          <div><p className="font-semibold text-[#141b2b]">2. Agree a deal</p><p className="mt-1">Split the work into milestones. Paid deals are paid directly, milestone by milestone, and both sides confirm each payment here.</p></div>
+          <div><p className="font-semibold text-[#141b2b]">3. Show your work</p><p className="mt-1">Accepted milestones and teammate-signed tasks become proof. Reviews stay hidden until both sides write theirs. Likes are appreciation, not proof.</p></div>
         </div>
         <p className="mt-7 text-[12px] text-[#777587]">Idea visibility lets owners choose what to share. It does not grant exclusive ownership or prevent similar work.</p>
       </section>

@@ -58,6 +58,11 @@ export type SprintIdea = {
   approach?: { body: string; contactEmail?: string } | null;
   isMember?: boolean;
   engagement?: Engagement;
+  teamMax?: number;
+  dealType?: string;
+  currency?: string | null;
+  budgetMinor?: number | null;
+  licence?: string | null;
   images?: { id: string; imageUrl: string; role: "hero" | "figure" }[];
 };
 
@@ -144,6 +149,10 @@ export type CampusProfile = {
     followingCount?: number;
     viewerFollows?: boolean;
     activityStreak?: number;
+    verifiedStudent?: boolean;
+    handle?: string;
+    country?: string | null;
+    city?: string | null;
   };
   stats: { ideasPosted: number; teamsJoined: number; shipped: number; signedTasks: number; likesReceived: number; comments: number };
   teams: { ideaId: string; title: string; teamStatus: string; joinedAt: string; leftAt: string | null }[];
@@ -716,4 +725,157 @@ export function getHelp(token: string) {
 }
 export function addFreshLine(token: string, id: string, freshLine: string) {
   return request(`/campus/problems/${id}/fresh-line`, token, { method: "POST", body: JSON.stringify({ freshLine }) });
+}
+
+// ---------- MARKETPLACE PHASE 1: deals, milestones, payments, reviews, threads ----------
+export type DealParty = { id: string; handle: string; displayName: string | null; isAdult: boolean } | null;
+export type DealMilestone = {
+  id: string;
+  position: number;
+  title: string;
+  amountMinor: number;
+  amount: string | null;
+  dueAt: string | null;
+  status: "open" | "submitted" | "accepted" | "auto_accepted" | "disputed" | "payment_confirmed";
+  deliverableLinks: string[];
+  note: string | null;
+  submittedAt: string | null;
+  acceptanceDeadline: string | null;
+  acceptedAt: string | null;
+  disputedAt: string | null;
+  disputeReason: string | null;
+  payment: { method: string; reference: string | null; payerConfirmedAt: string | null; payeeConfirmedAt: string | null } | null;
+};
+export type DealReview = { onTime: number; communication: number; quality: number; wouldWorkAgain: boolean; note: string | null; createdAt: string };
+export type Deal = {
+  id: string;
+  role: "requester" | "builder" | "admin";
+  idea: { id: string; title: string } | null;
+  requester: DealParty;
+  builder: DealParty;
+  dealType: string;
+  paid: boolean;
+  currency: string | null;
+  totalAmountMinor: number;
+  total: string | null;
+  licence: string | null;
+  ipTerms: string;
+  nda: boolean;
+  status: "proposed" | "active" | "completed" | "cancelled";
+  createdAt: string;
+  builderAcceptedAt: string | null;
+  completedAt: string | null;
+  cancelledAt: string | null;
+  cancelReason: string | null;
+  threadOpen: boolean;
+  paymentNotice: string | null;
+  milestones: DealMilestone[];
+  reviews: { canReview: boolean; revealed: boolean; mine: DealReview | null; theirs: DealReview | null; waitingOnOther: boolean };
+};
+export type DealSummary = {
+  id: string;
+  role: "requester" | "builder";
+  ideaTitle: string;
+  otherHandle: string | null;
+  dealType: string;
+  total: string | null;
+  status: Deal["status"];
+  milestonesDone: number;
+  milestonesTotal: number;
+  needsYou: boolean;
+  createdAt: string;
+};
+export type DealMessage = { id: string; mine: boolean; handle: string; body: string; flag: string | null; createdAt: string };
+export type PersonRecord = {
+  reviews: { count: number; onTime: number[]; communication: number[]; quality: number[]; wouldWorkAgain: { yes: number; no: number } };
+  deals: { id: string; title: string; role: string; dealType: string; milestonesDone: number; paidMilestones: number; paidConfirmed: string | null; completedAt: string | null }[];
+};
+export type NewDealInput = {
+  ideaId: string;
+  builderId: string;
+  dealType: string;
+  currency?: string | null;
+  licence?: string | null;
+  ipTerms?: string;
+  nda: boolean;
+  milestones: { title: string; amount: number; dueAt?: string | null }[];
+  notAcademicWork: true;
+};
+
+const post = (body?: unknown): RequestInit => ({ method: "POST", body: JSON.stringify(body ?? {}) });
+
+export function listDeals(token: string, cursor?: string | null) {
+  const q = cursor ? `?${new URLSearchParams({ cursor })}` : "";
+  return request<{ engagements: DealSummary[]; nextCursor: string | null }>(`/campus/engagements${q}`, token);
+}
+export function getDeal(token: string, id: string) {
+  return request<{ engagement: Deal }>(`/campus/engagements/${id}`, token);
+}
+export function createDeal(token: string, input: NewDealInput) {
+  return request<{ engagement: Deal }>("/campus/engagements", token, post(input));
+}
+export function acceptDeal(token: string, id: string) {
+  return request<{ engagement: Deal }>(`/campus/engagements/${id}/accept`, token, post());
+}
+export function cancelDeal(token: string, id: string, reason: string) {
+  return request<{ engagement: Deal }>(`/campus/engagements/${id}/cancel`, token, post({ reason }));
+}
+export function reviewDeal(token: string, id: string, review: { onTime: number; communication: number; quality: number; wouldWorkAgain: boolean; note?: string }) {
+  return request<{ engagement: Deal }>(`/campus/engagements/${id}/review`, token, post(review));
+}
+export function submitMilestone(token: string, id: string, links: string[], note?: string) {
+  return request<{ engagement: Deal }>(`/campus/milestones/${id}/submit`, token, post({ links, note }));
+}
+export function acceptMilestone(token: string, id: string) {
+  return request<{ engagement: Deal }>(`/campus/milestones/${id}/accept`, token, post());
+}
+export function disputeMilestone(token: string, id: string, reason: string) {
+  return request<{ engagement: Deal }>(`/campus/milestones/${id}/dispute`, token, post({ reason }));
+}
+export function recordMilestonePayment(token: string, id: string, method: string, reference?: string) {
+  return request<{ engagement: Deal }>(`/campus/milestones/${id}/payment`, token, post({ method, reference: reference || undefined }));
+}
+export function confirmMilestonePayment(token: string, id: string) {
+  return request<{ engagement: Deal }>(`/campus/milestones/${id}/payment/confirm`, token, post());
+}
+export function listDealMessages(token: string, id: string, cursor?: string | null) {
+  const q = cursor ? `?${new URLSearchParams({ cursor })}` : "";
+  return request<{ open: boolean; messages: DealMessage[]; nextCursor: string | null }>(`/campus/engagements/${id}/messages${q}`, token);
+}
+export function postDealMessage(token: string, id: string, body: string) {
+  return request<{ message: DealMessage; warning: string | null }>(`/campus/engagements/${id}/messages`, token, post({ body }));
+}
+export function getPersonRecord(token: string, id: string) {
+  return request<PersonRecord>(`/campus/people/${id}/record`, token);
+}
+
+// Account
+export function setMyHandle(token: string, handle: string) {
+  return request<{ handle: string }>("/campus/me/handle", token, { method: "PUT", body: JSON.stringify({ handle }) });
+}
+export function confirmAdult(token: string) {
+  return request<{ isAdult: boolean }>("/campus/me/adult", token, post({ isAdult: true }));
+}
+export function setMyPrivacy(token: string, showInstitution: boolean) {
+  return request<{ showInstitution: boolean }>("/campus/me/privacy", token, { method: "PUT", body: JSON.stringify({ showInstitution }) });
+}
+export function sendAppeal(token: string, text: string) {
+  return request<{ appealed: boolean }>("/campus/me/appeal", token, post({ text }));
+}
+
+// Moderation (admin)
+export type IntegrityFlag = { id: string; targetType: string; targetId: string; title: string | null; source: string; label: string; score: number | null; matched: string | null; createdAt: string };
+export type SuspensionAppeal = { id: string; username: string; suspendedReason: string | null; suspensionAppeal: string | null; appealedAt: string | null };
+export function listIntegrityFlags(token: string, cursor?: string | null) {
+  const q = cursor ? `?${new URLSearchParams({ cursor })}` : "";
+  return request<{ flags: IntegrityFlag[]; appeals: SuspensionAppeal[]; nextCursor: string | null }>(`/campus/admin/integrity${q}`, token);
+}
+export function resolveIntegrityFlag(token: string, id: string, action: "clear" | "confirm") {
+  return request<{ ok: true }>(`/campus/admin/integrity/${id}`, token, post({ action }));
+}
+export function suspendPerson(token: string, id: string, reason: string) {
+  return request<{ ok: true }>(`/campus/admin/users/${id}/suspend`, token, post({ reason }));
+}
+export function unsuspendPerson(token: string, id: string) {
+  return request<{ ok: true }>(`/campus/admin/users/${id}/unsuspend`, token, post());
 }

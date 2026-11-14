@@ -17,6 +17,7 @@ import { setupSocketIO } from "./sockets/groupSocket";
 import { startEmbeddingWorker } from "./queues/embeddingQueue";
 import { startDocumentWorker } from "./queues/documentQueue";
 import { startDay7Worker } from "./queues/day7Queue";
+import { startMarketplaceWorker } from "./queues/marketplaceQueue";
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
@@ -87,6 +88,7 @@ server.listen(PORT, () => {
     startEmbeddingWorker();
     startDocumentWorker();
     startDay7Worker();
+    startMarketplaceWorker();
 });
 
 export { app, server, io };

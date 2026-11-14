@@ -1,9 +1,55 @@
 import { z } from "zod";
 
+/** The first pilot campus. Still used for roll-number guesses; sign-in is open to any academic domain. */
 export const CAMPUS_DOMAIN = "bl.students.amrita.edu";
 
+/**
+ * Academic domains that don't follow the .edu / .ac.xx pattern. Add a domain here after a manual check.
+ * Keys are lowercase domains; a subdomain of a listed domain also passes.
+ */
+export const ACADEMIC_EXTRA_DOMAINS: Record<string, string> = {
+    "amrita.edu": "Amrita Vishwa Vidyapeetham",
+    "vit.ac.in": "VIT",
+    "tu.edu.np": "Tribhuvan University",
+    "ku.edu.np": "Kathmandu University",
+    "ox.ac.uk": "University of Oxford",
+    "cam.ac.uk": "University of Cambridge",
+    "ethz.ch": "ETH Zurich",
+    "epfl.ch": "EPFL",
+    "tum.de": "Technical University of Munich",
+    "utoronto.ca": "University of Toronto",
+    "ubc.ca": "University of British Columbia",
+    "nus.edu.sg": "National University of Singapore",
+    "ntu.edu.sg": "Nanyang Technological University",
+};
+
+/** Free consumer mail hosts are never academic, even if a pattern would match. */
+const NON_ACADEMIC_HOSTS = new Set(["gmail.com", "outlook.com", "hotmail.com", "yahoo.com", "icloud.com", "proton.me", "protonmail.com"]);
+
+/**
+ * True for a university mailbox anywhere: *.edu, *.edu.xx, *.ac.xx, or an allowlisted domain.
+ * Attest is not affiliated with any university; this only proves the person is (or was recently) a student or staff.
+ */
+export function isAcademicDomain(domain: string) {
+    const d = domain.trim().toLowerCase();
+    if (!d || NON_ACADEMIC_HOSTS.has(d)) return false;
+    if (/\.edu$/.test(d)) return true;
+    if (/\.edu\.[a-z]{2}$/.test(d)) return true;
+    if (/\.ac\.[a-z]{2}$/.test(d)) return true;
+    return Object.keys(ACADEMIC_EXTRA_DOMAINS).some((known) => d === known || d.endsWith(`.${known}`));
+}
+
+export function emailDomain(email: string) {
+    return email.split("@")[1]?.trim().toLowerCase() ?? "";
+}
+
+export function isAcademicEmail(email: string) {
+    return isAcademicDomain(emailDomain(email));
+}
+
+/** Suggested disciplines. The profile accepts any discipline as free text. */
 export const BRANCHES = ["CSE", "AIE", "ECE", "EEE", "ME", "EAC"] as const;
-export const branchSchema = z.enum(BRANCHES);
+export const branchSchema = z.string().trim().min(2, "Add your branch or discipline").max(40);
 
 type Branch = (typeof BRANCHES)[number];
 
@@ -147,10 +193,12 @@ export const campusEmailSchema = z
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Enter a valid email" });
             return;
         }
-        if (!email.endsWith(`@${CAMPUS_DOMAIN}`)) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: `Use a @${CAMPUS_DOMAIN} address` });
+        if (!isAcademicEmail(email)) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Use your university email (for example .edu, .ac.in or .edu.np)" });
         }
     });
+/** Any verified academic email, worldwide. Kept under the old name so existing imports keep working. */
+export const academicEmailSchema = campusEmailSchema;
 
 export const requestCodeSchema = z.object({ email: campusEmailSchema });
 export const verifyCodeSchema = z.object({
@@ -186,7 +234,10 @@ export const experienceSchema = z.object({
 export const campusProfileSchema = z.object({
     displayName: z.string().trim().min(1).max(80),
     branch: branchSchema,
-    semester: z.number().int().min(1).max(8),
+    semester: z.number().int().min(1).max(12),
+    country: z.string().trim().max(56).nullable().optional(),
+    city: z.string().trim().max(80).nullable().optional(),
+    showInstitution: z.boolean().optional(),
     skills: z.array(z.string().trim().min(1).max(40)).max(8),
     interests: z.array(z.string()).max(20),
     twoWeekLine: z.string().trim().min(8).max(280),
@@ -247,6 +298,145 @@ const publicText = (min: number) => z.string().trim().min(min).max(2000);
 export const IDEA_VISIBILITY = ["minimal", "standard", "open"] as const;
 export type IdeaVisibility = (typeof IDEA_VISIBILITY)[number];
 
+// ---------- MARKETPLACE PHASE 1 ----------
+/** How a project rewards builders. Paid types need both sides 18+ (RULES 15). */
+export const DEAL_TYPES = ["paid_fixed", "sponsor_stipend", "open_source", "co_owned", "credit_only"] as const;
+export type DealType = (typeof DEAL_TYPES)[number];
+export const PAID_DEAL_TYPES: readonly DealType[] = ["paid_fixed", "sponsor_stipend"];
+export const DEAL_TYPE_LABELS: Record<DealType, string> = {
+    paid_fixed: "Paid, fixed price",
+    sponsor_stipend: "Sponsor stipend",
+    open_source: "Open source",
+    co_owned: "Co-owned",
+    credit_only: "Credit only",
+};
+export function isPaidDeal(dealType: string | null | undefined) {
+    return (PAID_DEAL_TYPES as readonly string[]).includes(dealType ?? "");
+}
+
+export const CURRENCIES = ["INR", "NPR", "USD", "EUR", "GBP", "BDT", "PKR", "LKR", "AUD", "CAD", "SGD", "AED", "NGN", "KES", "PHP", "IDR"] as const;
+export const LICENCES = ["MIT", "Apache-2.0", "GPL-3.0", "CC-BY-4.0", "CERN-OHL-S-2.0", "CERN-OHL-P-2.0"] as const;
+export const PAYMENT_METHODS = ["upi", "bank_transfer", "razorpay_link", "payoneer", "wise", "paypal", "cash", "other"] as const;
+export const ENGAGEMENT_STATUSES = ["proposed", "active", "completed", "cancelled"] as const;
+export const MILESTONE_STATUSES = ["open", "submitted", "accepted", "auto_accepted", "disputed", "payment_confirmed"] as const;
+export const DEFAULT_IP_TERMS = "IP in each milestone moves to the requester once that milestone's payment is confirmed by both sides. The builder may show the work in their portfolio unless an NDA is agreed.";
+
+/** Major units (e.g. 1500.50) → integer minor units (150050). */
+export function toMinor(amount: number) {
+    return Math.round(amount * 100);
+}
+export function formatMoney(minor: number | null | undefined, currency: string | null | undefined) {
+    if (minor === null || minor === undefined || !currency) return null;
+    return `${currency} ${(minor / 100).toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+}
+
+const notAcademicWork = z.literal(true, {
+    errorMap: () => ({ message: "Confirm this is not graded coursework, an exam, or an assignment" }),
+});
+
+const dealFields = {
+    dealType: z.enum(DEAL_TYPES),
+    currency: z.enum(CURRENCIES).nullable().optional(),
+    budget: z.number().positive().max(10_000_000).nullable().optional(),
+    licence: z.enum(LICENCES).nullable().optional(),
+};
+
+function checkDeal(value: { dealType: DealType; currency?: string | null; budget?: number | null; licence?: string | null }, ctx: z.RefinementCtx) {
+    if (isPaidDeal(value.dealType)) {
+        if (!value.currency) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Paid deals need a currency", path: ["currency"] });
+        if (!value.budget) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Paid deals need a budget", path: ["budget"] });
+    }
+    if (value.dealType === "open_source" && !value.licence) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Open-source projects pick a licence", path: ["licence"] });
+    }
+}
+
+/** Phrases that suggest graded coursework. A hit flags the post for human review; it never blocks or bans. */
+const ACADEMIC_PATTERNS: { label: string; re: RegExp }[] = [
+    { label: "assignment", re: /\b(my|our|the|this)\s+(assignment|homework|coursework|lab record|lab manual)\b/i },
+    { label: "assignment number", re: /\b(assignment|lab|tutorial|problem set|pset)\s*(no\.?|#)?\s*\d{1,2}\b/i },
+    { label: "exam", re: /\b(exam|quiz|midterm|mid-sem|end-sem|viva)\b.*\b(answers?|solve|write|take)\b/i },
+    { label: "exam", re: /\b(answer|solve|write|take)\b.*\b(my |the |an? )?(exam|quiz|midterm|mid-sem|end-sem|viva)\b/i },
+    { label: "grading", re: /\b(rubric|graded|grading criteria|submission deadline|internal marks|for (my|our) (marks|grade))\b/i },
+    { label: "course code", re: /\b[A-Z]{2,4}\s?-?\d{3,4}[A-Z]?\b.*\b(assignment|project|lab|report)\b/ },
+    { label: "LMS", re: /\b(moodle|canvas|blackboard|google classroom|turnitin)\b/i },
+    { label: "final year report", re: /\b(final[- ]year|capstone|major|minor)\s+project\s+(report|submission|for (my|our) college)\b/i },
+    { label: "do it for me", re: /\b(write|do|complete|finish)\s+(my|our)\s+(project|thesis|dissertation|report|paper)\b/i },
+];
+
+export function detectAcademicRequest(text: string) {
+    for (const pattern of ACADEMIC_PATTERNS) {
+        const match = text.match(pattern.re);
+        if (match) return { label: pattern.label, matched: match[0].slice(0, 200) };
+    }
+    return null;
+}
+
+/** Payment handles, phone numbers and emails in engagement messages get a warning flag (not blocked). */
+export function detectContactDetails(text: string) {
+    if (/\b[\w.-]{2,}@(ok\w+|ybl|paytm|upi|axl|ibl|apl|ptyes|yapl|sbi|icici|hdfcbank)\b/i.test(text)) return "contact_details";
+    if (/[\w.+-]+@[\w-]+\.[\w.]+/.test(text)) return "contact_details";
+    if (/(\+?\d[\d\s-]{8,}\d)/.test(text)) return "contact_details";
+    if (/\b(whatsapp|telegram|signal)\b/i.test(text)) return "contact_details";
+    return null;
+}
+
+export const HANDLE_RE = /^[a-z0-9_]{3,24}$/;
+export const updateHandleSchema = z.object({
+    handle: z.string().trim().toLowerCase().regex(HANDLE_RE, "3–24 characters: lowercase letters, numbers and _"),
+});
+export const confirmAdultSchema = z.object({ isAdult: z.literal(true) });
+export const privacySchema = z.object({ showInstitution: z.boolean() });
+
+const milestoneInput = z.object({
+    title: z.string().trim().min(3).max(140),
+    amount: z.number().min(0).max(10_000_000).default(0),
+    dueAt: z.string().datetime().nullable().optional(),
+});
+
+export const createEngagementSchema = z.object({
+    ideaId: z.string().uuid(),
+    builderId: z.string().uuid(),
+    ...dealFields,
+    ipTerms: z.string().trim().min(20).max(2000).optional(),
+    nda: z.boolean().default(false),
+    milestones: z.array(milestoneInput).min(1).max(8),
+    notAcademicWork,
+}).superRefine((value, ctx) => {
+    checkDeal({ ...value, budget: value.milestones.reduce((sum, m) => sum + (m.amount ?? 0), 0) || null }, ctx);
+    if (!isPaidDeal(value.dealType) && value.milestones.some((m) => (m.amount ?? 0) > 0)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Unpaid deals can't put money on milestones", path: ["milestones"] });
+    }
+    if (isPaidDeal(value.dealType) && value.milestones.some((m) => !m.amount)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Every paid milestone needs an amount", path: ["milestones"] });
+    }
+});
+export type CreateEngagementInput = z.infer<typeof createEngagementSchema>;
+
+export const cancelEngagementSchema = z.object({ reason: z.string().trim().min(4).max(400) });
+export const submitMilestoneSchema = z.object({
+    links: z.array(z.string().trim().url().regex(/^https?:\/\//i)).min(1, "Add at least one link to the work").max(6),
+    note: z.string().trim().max(1000).optional(),
+});
+export const disputeMilestoneSchema = z.object({ reason: z.string().trim().min(8).max(1000) });
+export const recordPaymentSchema = z.object({
+    method: z.enum(PAYMENT_METHODS),
+    reference: z.string().trim().max(80).optional()
+        .refine((ref) => !ref || !/\d{9,}/.test(ref.replace(/[\s-]/g, "")) || /[a-z]/i.test(ref), "Use a receipt or transaction ID, never an account or card number"),
+});
+export const reviewSchema = z.object({
+    onTime: z.number().int().min(1).max(5),
+    communication: z.number().int().min(1).max(5),
+    quality: z.number().int().min(1).max(5),
+    wouldWorkAgain: z.boolean(),
+    note: z.string().trim().max(500).optional(),
+});
+export const engagementMessageSchema = z.object({ body: z.string().trim().min(1).max(2000) });
+export const cursorQuerySchema = z.object({ cursor: z.string().max(200).optional() });
+export const resolveIntegrityFlagSchema = z.object({ action: z.enum(["clear", "confirm"]) });
+export const suspendUserSchema = z.object({ reason: z.string().trim().min(8).max(400) });
+export const appealSchema = z.object({ text: z.string().trim().min(20).max(2000) });
+
 export const createSprintIdeaSchema = z.object({
     title: z.string().trim().min(3).max(120),
     blurb: z.string().trim().min(12).max(160).optional(),
@@ -264,10 +454,13 @@ export const createSprintIdeaSchema = z.object({
     approach: z.string().trim().min(10).max(4000),
     contactEmail: campusEmailSchema,
     publicWriteup: z.string().trim().max(2500).optional(),
+    ...dealFields,
+    notAcademicWork,
 }).superRefine((value, ctx) => {
     if (value.visibility === "minimal" && !(value.blurb && value.blurb.trim().length >= 12)) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Minimal visibility needs a short public teaser", path: ["blurb"] });
     }
+    checkDeal(value, ctx);
 });
 export type CreateSprintIdeaInput = z.infer<typeof createSprintIdeaSchema>;
 
@@ -280,6 +473,7 @@ export const createProblemSchema = z.object({
     hideName: z.boolean().default(false),
     approach: z.string().trim().min(10).max(4000),
     contactEmail: campusEmailSchema,
+    notAcademicWork,
 });
 export type CreateProblemInput = z.infer<typeof createProblemSchema>;
 
@@ -384,9 +578,13 @@ export const UNIVERSITY_BY_DOMAIN: Record<string, { university: string; campus: 
 };
 
 export function universityForEmail(email: string) {
-    const domain = email.split("@")[1]?.toLowerCase() ?? "";
+    const domain = emailDomain(email);
     const match = UNIVERSITY_BY_DOMAIN[domain];
-    return match ? `${match.university}, ${match.campus}` : null;
+    if (match) return `${match.university}, ${match.campus}`;
+    const known = Object.keys(ACADEMIC_EXTRA_DOMAINS).find((d) => domain === d || domain.endsWith(`.${d}`));
+    if (known) return ACADEMIC_EXTRA_DOMAINS[known];
+    // Unknown academic domain: keep the domain itself as the verified institution label.
+    return isAcademicDomain(domain) ? domain : null;
 }
 
 export const DEGREES = ["B.Tech", "M.Tech", "BCA", "MCA", "B.Sc", "M.Sc", "MBA", "PhD"] as const;

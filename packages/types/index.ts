@@ -58,6 +58,14 @@ export const userResponseSchema = z.object({
     }).optional(),
     isAdmin: z.boolean().optional(),
     profileComplete: z.boolean().optional(),
+    handle: z.string().optional(),
+    country: z.string().nullable().optional(),
+    city: z.string().nullable().optional(),
+    showInstitution: z.boolean().optional(),
+    isAdult: z.boolean().optional(),
+    suspended: z.boolean().optional(),
+    suspendedReason: z.string().nullable().optional(),
+    appealed: z.boolean().optional(),
 });
 
 export type UserResponse = z.infer<typeof userResponseSchema>;

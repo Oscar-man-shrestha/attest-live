@@ -240,3 +240,34 @@ Ranking is described at the top of `api/src/services/recommender.ts`. Embeddings
 | POST | `/nlp/draft-contribution` | Raw input → structured contribution draft |
 
 All NLP calls from `api` are queued via BullMQ, not called synchronously inline in a request handler (per AGENTS.md rule 8).
+
+## Marketplace Phase 1 (added 2026-11-15)
+
+All under `/api/v1/campus`, JWT required. Zod schemas live in `packages/types/campus.ts`. Lists are cursor-paginated. Suspended users get 403 on every write except `POST /me/appeal`. Attest never holds money: payment routes only record what happened off-platform.
+
+| Method | Path | Zod in | Notes |
+|---|---|---|---|
+| GET | `/engagements` | `cursorQuerySchema` | Your deals (requester or builder), 20 per page, `needsYou` flag |
+| POST | `/engagements` | `createEngagementSchema` | Idea owner proposes a deal to an active teammate. Paid types need both 18+; builder max 2 active paid deals; `notAcademicWork: true` required |
+| GET | `/engagements/:id` | — | Parties (or admin) only. Milestones, payments, reviews (hidden until both submit or 14 days) |
+| POST | `/engagements/:id/accept` | — | Builder accepts → `active` |
+| POST | `/engagements/:id/cancel` | `cancelEngagementSchema` | Either party, while proposed/active; reason shown to the other |
+| POST | `/engagements/:id/review` | `reviewSchema` | After completion; once per party |
+| GET | `/engagements/:id/messages` | `cursorQuerySchema` | Engagement-scoped thread, newest first, 30 per page |
+| POST | `/engagements/:id/messages` | `engagementMessageSchema` | Open while proposed/active; payment handles/phones get `flag: contact_details` + warning |
+| POST | `/milestones/:id/submit` | `submitMilestoneSchema` | Builder; 1–6 links; starts 7-day acceptance window |
+| POST | `/milestones/:id/accept` | — | Requester |
+| POST | `/milestones/:id/dispute` | `disputeMilestoneSchema` | Requester; builder resubmits |
+| POST | `/milestones/:id/payment` | `recordPaymentSchema` | Requester records an off-platform payment (method + receipt ID, never account numbers) |
+| POST | `/milestones/:id/payment/confirm` | — | Builder confirms receipt → `payment_confirmed`; all done → deal `completed` |
+| GET | `/people/:id/record` | — | Review distributions (never averages) + deal record for profiles |
+| PUT | `/me/handle` | `updateHandleSchema` | Rename public handle |
+| POST | `/me/adult` | `confirmAdultSchema` | Self-confirm 18+ (needed for paid deals) |
+| PUT | `/me/privacy` | `privacySchema` | `showInstitution` |
+| POST | `/me/appeal` | `appealSchema` | Suspended users only |
+| GET | `/admin/integrity` | `cursorQuerySchema` | Admin: pending coursework flags + suspension appeals |
+| POST | `/admin/integrity/:id` | `resolveIntegrityFlagSchema` | Admin: `clear` or `confirm` (confirm hides the post / cancels the deal; never suspends) |
+| POST | `/admin/users/:id/suspend` | `suspendUserSchema` | Admin; reason required; user is emailed and can appeal |
+| POST | `/admin/users/:id/unsuspend` | — | Admin |
+
+Changed: `POST /auth/campus/request-code` and `/verify` accept any academic email (`isAcademicEmail`). `POST /auth/signup` and `/auth/login` return 410. `POST /campus/ideas` takes `dealType`, `currency`, `budget`, `licence`, `notAcademicWork`; `POST /campus/problems` takes `notAcademicWork`.

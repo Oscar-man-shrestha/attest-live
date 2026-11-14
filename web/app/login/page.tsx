@@ -76,25 +76,15 @@ function LoginForm() {
           Attest
         </Link>
         <p className="mt-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#4f46e5]">
-          Campus sprint · 14 days
+          Real projects · paid or for proof
         </p>
         <h1 className="mt-4 font-serif text-[28px] sm:text-[32px] font-semibold text-[#141b2b] leading-tight">
-          Sign in with your student email
+          Sign in with your university email
         </h1>
         <p className="mt-2 text-[14px] text-[#464555] leading-relaxed">
-          The first sign-in creates the account. Only @bl.students.amrita.edu accounts get in. Attest is not a university product.
+          Any university email works, anywhere in the world — .edu, .ac.in, .edu.np and similar. We send a one-time code; the first sign-in creates the account. Attest is not affiliated with any university, and your university stays hidden unless you choose to show it.
         </p>
-        <button
-          type="button"
-          onClick={signInWithOutlook}
-          disabled={busy}
-          className="mt-6 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-[#141b2b] text-white text-[13px] font-semibold py-3 disabled:opacity-60 transition-transform active:scale-[0.99]"
-        >
-          <span className="material-symbols-outlined text-[18px]">mail</span>
-          Continue with college Outlook
-        </button>
-        <p className="mt-5 text-[12px] text-[#777587] text-center">Or get a code by email</p>
-        <form onSubmit={sent ? verify : send} className="mt-2 space-y-3 bg-white/90 backdrop-blur rounded-xl p-5 border border-[#e4e2ee] shadow-sm">
+        <form onSubmit={sent ? verify : send} className="mt-6 space-y-3 bg-white/90 backdrop-blur rounded-xl p-5 border border-[#e4e2ee] shadow-sm">
           <label className="block text-[12px] font-medium text-[#464555]">
             Email
             <input
@@ -102,7 +92,7 @@ function LoginForm() {
               required
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="name@bl.students.amrita.edu"
+              placeholder="you@university.edu"
               className="mt-1 w-full rounded-lg border border-[#c7c4d8] px-3 py-2 text-[14px]"
             />
           </label>
@@ -128,6 +118,16 @@ function LoginForm() {
             {busy ? "Working…" : sent ? "Enter code" : "Send code"}
           </button>
         </form>
+        <p className="mt-5 text-[12px] text-[#777587] text-center">Amrita Bengaluru student?</p>
+        <button
+          type="button"
+          onClick={signInWithOutlook}
+          disabled={busy}
+          className="mt-2 w-full inline-flex items-center justify-center gap-2 rounded-lg border border-[#c7c4d8] bg-white text-[#141b2b] text-[13px] font-semibold py-2.5 disabled:opacity-60 transition-transform active:scale-[0.99]"
+        >
+          <span className="material-symbols-outlined text-[18px]">mail</span>
+          Continue with college Outlook
+        </button>
       </div>
     </div>
   );
