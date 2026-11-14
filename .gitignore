@@ -1,0 +1,28 @@
+# Secrets: never commit real env files (examples are fine)
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+nlp/.venv/
+.venv/
+
+# Build output and caches
+.next/
+out/
+dist/
+build/
+.turbo/
+*.tsbuildinfo
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+.vscode/
+.cursor/
+
+# Logs
+*.log
+npm-debug.log*

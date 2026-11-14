@@ -1,0 +1,11 @@
+{
+  "scripts": {
+    "dev": "npm --prefix web run dev",
+    "dev:web": "npm --prefix web run dev",
+    "dev:api": "npm --prefix api run dev",
+    "build": "npm --prefix web run build"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}
