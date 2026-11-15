@@ -71,6 +71,13 @@
       "when": 1790470000000,
       "tag": "0009_reaction_want",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790480000000,
+      "tag": "0010_kits",
+      "breakpoints": true
     }
   ]
 }

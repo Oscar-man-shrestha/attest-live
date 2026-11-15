@@ -193,7 +193,7 @@ export default function HomePage() {
         <p className="text-[12px] leading-relaxed text-[#777587]">
           Attest is not affiliated with any university. It is for real projects, never graded coursework, exams or assignments. Paid work is for people 18 or older.
           Idea visibility controls who sees your details; it does not grant exclusive ownership.{" "}
-          <Link href="/rules" className="font-semibold text-[#141b2b] underline underline-offset-2">Read the house rules</Link>.
+          <Link href="/rules" className="font-semibold text-[#141b2b] underline underline-offset-2">House rules</Link> · <Link href="/pricing" className="font-semibold text-[#141b2b] underline underline-offset-2">Plans</Link>
         </p>
       </footer>
     </div>

@@ -4,6 +4,8 @@ import Stamp from "@/components/brand/Stamp";
 
 export const metadata = { title: "House rules — Attest" };
 
+const SUPPORT_EMAIL = process.env.NEXT_PUBLIC_SUPPORT_EMAIL?.trim() || "";
+
 const RULES: { n: string; title: string; body: string[] }[] = [
   {
     n: "01",
@@ -100,8 +102,15 @@ export default function RulesPage() {
           ))}
         </ol>
 
-        <p className="mt-8 text-[12px] leading-relaxed text-[#777587]">
-          These rules are a plain-language summary and may change as Attest grows. See something that breaks them? Use Report on the post.
+        <div className="mt-8 rounded-2xl border border-[#e4e2ee] bg-white p-5 text-[14px] leading-relaxed text-[#464555]">
+          <h2 className="font-serif text-[18px] font-semibold text-[#141b2b]">What Attest is, and isn&apos;t</h2>
+          <p className="mt-2">Attest introduces students to each other and records what they agree and confirm. It is not a party to any deal, does not employ anyone, does not handle payments, and cannot guarantee anyone&apos;s work or payment. Agreements are between the two people involved.</p>
+          <p className="mt-2">
+            Complaints and takedown requests: use Report on the post{SUPPORT_EMAIL ? <>, or write to <a href={`mailto:${SUPPORT_EMAIL}`} className="font-semibold text-[#141b2b] underline">{SUPPORT_EMAIL}</a>. We aim to acknowledge within 24 hours and resolve within 15 days</> : ""}.
+          </p>
+        </div>
+        <p className="mt-4 text-[12px] leading-relaxed text-[#777587]">
+          These rules are a plain-language summary and may change as Attest grows. <Link href="/pricing" className="font-semibold text-[#141b2b] underline underline-offset-2">Plans</Link>: students never pay.
         </p>
         <Link href="/login" className="mt-5 inline-flex rounded-xl bg-[#141b2b] px-5 py-3 text-[14px] font-semibold text-white">Sign in with your university email</Link>
       </article>

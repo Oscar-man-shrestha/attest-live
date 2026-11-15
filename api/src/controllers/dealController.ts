@@ -7,6 +7,9 @@ import {
     confirmAdultSchema,
     createEngagementSchema,
     createGigSchema,
+    createKitSchema,
+    kitListQuerySchema,
+    kitNeedSchema,
     cursorQuerySchema,
     gigListQuerySchema,
     gigResponseSchema,
@@ -23,6 +26,7 @@ import {
 import { CampusError } from "../services/campusService";
 import * as deals from "../services/dealService";
 import * as gigs from "../services/gigService";
+import * as kitService from "../services/kitService";
 import * as social from "../services/social";
 import * as teamThread from "../services/teamThreadService";
 
@@ -95,6 +99,13 @@ export const wantIdea = (on: boolean) => handle(null, "body", (userId, id) => so
 // Team thread (owner + active team members only)
 export const listTeamMessages = handle(cursorQuerySchema, "query", (userId, id, input) => teamThread.listTeamMessages(userId, id, input));
 export const postTeamMessage = handle(engagementMessageSchema, "body", (userId, id, input) => teamThread.postTeamMessage(userId, id, input.body));
+
+// Kits (organiser need lists)
+export const listKits = handle(kitListQuerySchema, "query", (userId, _id, input) => kitService.listKits(userId, input));
+export const createKit = handle(createKitSchema, "body", (userId, _id, input) => kitService.createKit(userId, input));
+export const getKit = handle(null, "body", (userId, id) => kitService.getKit(userId, id));
+export const addKitNeed = handle(kitNeedSchema, "body", (userId, id, input) => kitService.addNeed(userId, id, input));
+export const closeKit = handle(null, "body", (userId, id) => kitService.closeKit(userId, id));
 
 // Milestones
 export const submitMilestone = handle(submitMilestoneSchema, "body", (userId, id, input) => deals.submitMilestone(userId, id, input));

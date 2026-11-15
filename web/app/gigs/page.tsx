@@ -75,6 +75,7 @@ export default function GigsPage() {
             Ask for something small, or list what you can do. Accepting a response starts a one-milestone deal. Builders pay no fee, and Attest never holds the money.
           </p>
         </div>
+        <Link href="/kits" className="text-[13px] font-semibold text-[#047857] underline underline-offset-4">Running a fest or club? Use a Kit →</Link>
         <Link
           href="/gigs/new"
           className="inline-flex items-center gap-1.5 rounded-xl bg-[#047857] px-4 py-2.5 text-[13px] font-semibold text-white shadow-[3px_3px_0_0_#141b2b] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#141b2b]"

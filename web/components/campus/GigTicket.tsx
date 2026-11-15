@@ -18,6 +18,7 @@ export default function GigTicket({ gig }: { gig: Gig }) {
         <div className="mt-2 flex flex-wrap items-center gap-1.5">
           <span className="text-[12px] text-[#777587]">@{gig.author.handle}</span>
           <CampusChips sameCampus={gig.sameCampus} campusOnly={gig.campusOnly} />
+          {gig.kitId && <span className="rounded-full border border-[#c9eedd] bg-[#f4fdf8] px-2 py-0.5 text-[11px] font-semibold text-[#047857]">Part of a kit</span>}
           {gig.status === "closed" && <span className="rounded-full bg-[#f5f5f4] px-2 py-0.5 text-[11px] font-semibold text-[#57534e]">Closed</span>}
         </div>
       </div>

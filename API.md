@@ -311,3 +311,15 @@ Public, no JWT. All three ways in accept only university emails.
 | GET | `/auth/campus/google/start?next=` | Returns `{ url, state }` for Google's consent screen. 503 until `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` are set |
 | POST | `/auth/campus/google/callback` | `{ code, state }` → `{ token, user, next }`. Refuses unverified emails and non-university domains (personal Gmail) with 403 |
 | POST | `/auth/campus/verify` | Now locks a code after 5 wrong tries (429) |
+
+## Kits (added 2026-11-15)
+
+Organiser need lists. All under `/api/v1/campus`, JWT required.
+
+| Method | Path | Zod in | Notes |
+|---|---|---|---|
+| GET | `/kits` | `kitListQuerySchema` | Open kits (`campus=1` for own campus, `mine=1` for the viewer's), 20 per page |
+| POST | `/kits` | `createKitSchema` | Max 5 open kits per owner |
+| GET | `/kits/:id` | — | Kit, its needs with a `stage` (open, hired, review, delivered, paid) and totals. Builder, deal link and money totals are owner-only |
+| POST | `/kits/:id/needs` | `kitNeedSchema` | Owner only. Creates a request gig linked to the kit; max 20 per kit; paid needs require the owner 18+ |
+| POST | `/kits/:id/close` | — | Owner only. Unfilled needs close with it |

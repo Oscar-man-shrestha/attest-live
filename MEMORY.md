@@ -94,6 +94,15 @@ cd packages/db && npx ts-node --transpile-only seed-campus.ts --wipe-probes
 4. The sign-in page only shows methods that are actually configured (`GET /auth/campus/methods`).
 5. `academic_verifications.method` may now be `google`.
 
+## SaaS direction and Kits decision (2026-11-15, founder: "go for SaaS, make it unbeatable, don't ask")
+Research (two reports + targeted searches) says student marketplaces fail for lack of buyers, and the platforms that last charge the demand side (Unstop: employers on subscriptions; students free).
+1. **Attest is a SaaS-enabled marketplace.** Students are free forever (RULES 16). The product organisers come for is a free single-player tool; the marketplace is what they stay for.
+2. **Kits** are that tool: a need list for a fest, club, event or local business. Each need is a request gig linked to the kit, so builders see it on the Gigs board and the organiser tracks every need from open → hired → delivered → paid on one page. A kit can hold 20 needs (the 5-open-gig cap does not apply to kit needs).
+3. **Pricing is not switched on.** `/pricing` shows the plan shape honestly: Students free forever; Organiser workspace free during the pilot; Campus and Employer plans "talk to us". No payment keys, no checkout, no commission, until a lawyer and a CA sign off and a registered entity exists.
+4. **Campus first.** New visitors default to "My campus" on every board. Gig categories now include offline work (photography, handmade, events, merch) and AI-era work (video, automation).
+5. Attest is an introducer and record-keeper, not a party to any deal. `/rules` says so and shows a contact address when `NEXT_PUBLIC_SUPPORT_EMAIL` is set.
+6. No third-party accounts or API keys were created for this. Nothing here needs one.
+
 ## Known limits (2026-11-15)
 - The MiniLM coursework check is weak (homework 0.40 vs a real study-tool idea 0.42). The keyword check is the real guard; the model flags only scores ≥ 0.5. Revisit with a better zero-shot model if flags miss things.
 - Microsoft (Outlook) sign-in still works only for the Amrita tenant. Everyone else signs in with the email code.

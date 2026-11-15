@@ -7,12 +7,12 @@ const KEY = "attest_scope";
 
 /** Remembers the viewer's last choice between their own campus and every campus. */
 export function useCampusScope(): [CampusScope, (scope: CampusScope) => void] {
-  const [scope, setScope] = useState<CampusScope>("all");
+  const [scope, setScope] = useState<CampusScope>("campus");
   useEffect(() => {
     try {
-      if (localStorage.getItem(KEY) === "campus") setScope("campus");
+      if (localStorage.getItem(KEY) === "all") setScope("all");
     } catch {
-      /* storage unavailable: stay on "all" */
+      /* storage unavailable: stay on "My campus" */
     }
   }, []);
   const update = useCallback((next: CampusScope) => {

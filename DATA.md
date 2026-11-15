@@ -593,3 +593,28 @@ Unique on (gig_id, user_id). Accepting a response creates an `active` engagement
 
 ### group_messages (reused)
 The team thread for an idea uses the idea's `groups` row (created with the idea) and `group_messages`. Access is checked against the campus team (`ideas.owner_id` or an active `team_members` row), not `group_members`. `image_url` stays null. Cursor-paginated, 30 per page.
+
+## Kits (added 2026-11-15)
+
+### kits
+An organiser's need list for a fest, club, event or local business.
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, PK | |
+| owner_id | uuid, FK users | |
+| name | text | 4–80 chars |
+| kind | text | `fest`, `club`, `business`, `other` |
+| description | text, nullable | ≤ 600 chars |
+| event_date | timestamp, nullable | |
+| campus_domain | text, nullable | Owner's `email_domain` |
+| campus_only | boolean, default false | Applied to every need in the kit |
+| status | text, default `open` | `open` or `closed` |
+| hidden_at | timestamp, nullable | |
+| created_at | timestamp | |
+
+At most 5 open kits per owner and 20 needs per kit.
+
+### gigs (added column)
+| Column | Type | Notes |
+|---|---|---|
+| kit_id | uuid, FK kits, nullable | Set when the gig is a need inside a kit. Kit needs are always `request` gigs |

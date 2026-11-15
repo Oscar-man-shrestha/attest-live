@@ -944,6 +944,7 @@ export type Gig = {
   author: { id: string; handle: string };
   mine: boolean;
   responseCount?: number;
+  kitId?: string | null;
 };
 export type GigResponse = {
   id: string;
@@ -980,4 +981,35 @@ export function acceptGigResponse(token: string, responseId: string) {
 }
 export function declineGigResponse(token: string, responseId: string) {
   return request<{ ok: true }>(`/campus/gig-responses/${responseId}/decline`, token, { method: "POST", body: "{}" });
+}
+
+// ---------- KITS (organiser need lists) ----------
+export type Kit = {
+  id: string; name: string; kind: string; description: string | null; eventDate: string | null;
+  campusOnly: boolean; sameCampus: boolean; status: "open" | "closed"; createdAt: string;
+  owner: { id: string; handle: string }; mine: boolean; needs: number; filled: number;
+};
+export type KitNeed = Gig & { stage: "open" | "closed" | "hired" | "review" | "delivered" | "paid" | "cancelled"; builderHandle: string | null; engagementId: string | null; kitId?: string | null };
+export type KitDetail = {
+  kit: Kit; needs: KitNeed[];
+  totals: { needs: number; open: number; inProgress: number; done: number; budget: string | null; paidConfirmed: string | null };
+};
+export function listKits(token: string, params: { campus?: boolean; mine?: boolean; cursor?: string | null }) {
+  const q = new URLSearchParams();
+  if (params.campus) q.set("campus", "1");
+  if (params.mine) q.set("mine", "1");
+  if (params.cursor) q.set("cursor", params.cursor);
+  return request<{ kits: Kit[]; nextCursor: string | null }>(`/campus/kits${q.size ? `?${q}` : ""}`, token);
+}
+export function createKit(token: string, body: unknown) {
+  return request<{ kit: Kit }>("/campus/kits", token, { method: "POST", body: JSON.stringify(body) });
+}
+export function getKit(token: string, id: string) {
+  return request<KitDetail>(`/campus/kits/${id}`, token);
+}
+export function addKitNeed(token: string, id: string, body: unknown) {
+  return request<KitDetail>(`/campus/kits/${id}/needs`, token, { method: "POST", body: JSON.stringify(body) });
+}
+export function closeKit(token: string, id: string) {
+  return request<{ ok: true }>(`/campus/kits/${id}/close`, token, { method: "POST", body: "{}" });
 }

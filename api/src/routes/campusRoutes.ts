@@ -91,6 +91,13 @@ router.post("/gigs/:id/close", deals.closeGig);
 router.post("/gig-responses/:id/accept", deals.acceptGigResponse);
 router.post("/gig-responses/:id/decline", deals.declineGigResponse);
 
+// Kits (organiser need lists)
+router.get("/kits", deals.listKits);
+router.post("/kits", deals.createKit);
+router.get("/kits/:id", deals.getKit);
+router.post("/kits/:id/needs", deals.addKitNeed);
+router.post("/kits/:id/close", deals.closeKit);
+
 // Account settings
 router.put("/me/handle", deals.setHandle);
 router.post("/me/adult", deals.confirmAdult);

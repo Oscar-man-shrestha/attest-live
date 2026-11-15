@@ -59,7 +59,7 @@ async function mustGig(id: string, viewer: UserRow) {
     return gig;
 }
 
-function gigDto(gig: GigRow, author: Pick<UserRow, "id" | "username"> | undefined, viewer: UserRow, responseCount?: number) {
+export function gigDto(gig: GigRow, author: Pick<UserRow, "id" | "username"> | undefined, viewer: UserRow, responseCount?: number) {
     const paid = gig.dealType === "paid_fixed";
     return {
         id: gig.id,
@@ -81,6 +81,7 @@ function gigDto(gig: GigRow, author: Pick<UserRow, "id" | "username"> | undefine
         author: { id: gig.authorId, handle: author?.username ?? "" },
         mine: gig.authorId === viewer.id,
         responseCount: gig.authorId === viewer.id ? responseCount ?? 0 : undefined,
+        kitId: gig.kitId,
     };
 }
 
@@ -90,7 +91,7 @@ export async function createGig(userId: string, input: CreateGigInput) {
     if (paid && !author.adultConfirmedAt) {
         throw new CampusError(403, "Paid gigs need you to confirm you are 18 or older first (Profile → Account)");
     }
-    const [open] = await db.select({ n: count() }).from(gigs).where(and(eq(gigs.authorId, author.id), eq(gigs.status, "open"), isNull(gigs.hiddenAt)));
+    const [open] = await db.select({ n: count() }).from(gigs).where(and(eq(gigs.authorId, author.id), eq(gigs.status, "open"), isNull(gigs.hiddenAt), isNull(gigs.kitId)));
     if (Number(open?.n ?? 0) >= MAX_OPEN_GIGS) throw new CampusError(400, "Five open gigs is the cap. Close one first.");
     const [gig] = await db.insert(gigs).values({
         authorId: author.id,

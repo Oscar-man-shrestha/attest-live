@@ -429,6 +429,21 @@ export const documents = pgTable("documents", {
     byStatus: index("documents_status_created_idx").on(t.status, t.createdAt),
 }));
 
+// ---------- KITS (organiser need lists; see DATA.md) ----------
+export const kits = pgTable("kits", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    ownerId: uuid("owner_id").notNull().references(() => users.id),
+    name: text("name").notNull(),
+    kind: text("kind").notNull(),
+    description: text("description"),
+    eventDate: timestamp("event_date"),
+    campusDomain: text("campus_domain"),
+    campusOnly: boolean("campus_only").default(false).notNull(),
+    status: text("status").default("open").notNull(),
+    hiddenAt: timestamp("hidden_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // ---------- GIGS (quick freelancing; see DATA.md) ----------
 export const gigs = pgTable("gigs", {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -446,6 +461,7 @@ export const gigs = pgTable("gigs", {
     status: text("status").default("open").notNull(),
     notAcademicAttestedAt: timestamp("not_academic_attested_at").notNull(),
     hiddenAt: timestamp("hidden_at"),
+    kitId: uuid("kit_id").references(() => kits.id),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 }, (t) => ({
     byBoard: index("gigs_board_idx").on(t.status, t.kind, t.createdAt),

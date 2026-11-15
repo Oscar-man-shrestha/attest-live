@@ -59,6 +59,7 @@ export default function GigPage() {
           <div className="mt-2 flex flex-wrap items-center gap-1.5">
             <Link href={`/profile/${gig.author.id}`} className="text-[13px] font-semibold text-[#141b2b] hover:underline">@{gig.author.handle}</Link>
             <CampusChips sameCampus={gig.sameCampus} campusOnly={gig.campusOnly} />
+            {gig.kitId && <Link href={`/kits/${gig.kitId}`} className="rounded-full border border-[#c9eedd] bg-[#f4fdf8] px-2 py-0.5 text-[11px] font-semibold text-[#047857]">See the whole kit →</Link>}
             {!open && <span className="rounded-full bg-[#f5f5f4] px-2 py-0.5 text-[11px] font-semibold text-[#57534e]">{gig.hidden ? "Hidden by a moderator" : "Closed"}</span>}
           </div>
           <p className="mt-4 whitespace-pre-wrap text-[15px] leading-relaxed text-[#1f2433]">{gig.description}</p>

@@ -670,7 +670,7 @@ export function suggestBranch(email: string): (typeof BRANCHES)[number] | null {
 // ---------- GIGS (quick freelancing) ----------
 export const GIG_KINDS = ["request", "offer"] as const;
 export type GigKind = (typeof GIG_KINDS)[number];
-export const GIG_CATEGORIES = ["Web", "Mobile app", "Design", "Hardware and PCB", "CAD and 3D print", "Data and ML", "Video and content", "Writing and docs", "Tutoring a skill", "Other"] as const;
+export const GIG_CATEGORIES = ["Design and posters", "Video editing and reels", "Photography", "Handmade and gifts", "Merch and print", "Events and stage", "Web", "Mobile app", "AI and automation", "Hardware and PCB", "CAD and 3D print", "Data and ML", "Writing and docs", "Tutoring a skill", "Other"] as const;
 export const GIG_DEAL_TYPES = ["paid_fixed", "credit_only"] as const;
 
 export const createGigSchema = z.object({
@@ -700,3 +700,29 @@ export const gigListQuerySchema = z.object({
     cursor: z.string().max(200).optional(),
 });
 export const gigResponseSchema = z.object({ note: z.string().trim().min(12).max(1000) });
+
+// ---------- KITS (organiser need lists) ----------
+export const KIT_KINDS = ["fest", "club", "business", "other"] as const;
+export const KIT_KIND_LABELS: Record<(typeof KIT_KINDS)[number], string> = { fest: "Fest", club: "Club", business: "Local business", other: "Other" };
+export const createKitSchema = z.object({
+    name: z.string().trim().min(4).max(80),
+    kind: z.enum(KIT_KINDS),
+    description: z.string().trim().max(600).optional(),
+    eventDate: z.string().datetime().nullable().optional(),
+    campusOnly: z.boolean().default(false),
+    notAcademicWork,
+});
+export const kitNeedSchema = z.object({
+    title: z.string().trim().min(6).max(100),
+    description: z.string().trim().min(30).max(1500),
+    category: z.enum(GIG_CATEGORIES),
+    dealType: z.enum(GIG_DEAL_TYPES),
+    currency: z.enum(CURRENCIES).nullable().optional(),
+    price: z.number().positive().max(10_000_000).nullable().optional(),
+    deliveryDays: z.number().int().min(1).max(60).nullable().optional(),
+}).superRefine((value, ctx) => {
+    if (value.dealType === "paid_fixed" && (!value.currency || !value.price)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Paid needs have a currency and a price", path: ["price"] });
+    }
+});
+export const kitListQuerySchema = z.object({ campus: z.enum(["1"]).optional(), mine: z.enum(["1"]).optional(), cursor: z.string().max(200).optional() });
