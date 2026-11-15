@@ -585,3 +585,11 @@ Unique on (gig_id, user_id). Accepting a response creates an `active` engagement
 
 ### integrity_flags (changed)
 `target_type` may also be `gig`. Confirming hides the gig.
+
+## Demand signal and team thread (added 2026-11-15)
+
+### reactions (changed)
+`target_type` may also be `want` ("I'd use this"), with `target_id` = `ideas.id`. Same unique rule. The idea owner cannot add one. Counts are public; who clicked is not listed. The per-campus count joins `users.email_domain`.
+
+### group_messages (reused)
+The team thread for an idea uses the idea's `groups` row (created with the idea) and `group_messages`. Access is checked against the campus team (`ideas.owner_id` or an active `team_members` row), not `group_members`. `image_url` stays null. Cursor-paginated, 30 per page.

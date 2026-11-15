@@ -68,7 +68,7 @@ export type SprintIdea = {
   images?: { id: string; imageUrl: string; role: "hero" | "figure" }[];
 };
 
-export type Engagement = { likes: number; liked: boolean; comments: number; shares: number };
+export type Engagement = { likes: number; liked: boolean; comments: number; shares: number; wants?: number; wanted?: boolean; campusWants?: number };
 
 export type SprintComment = {
   id: string;
@@ -112,6 +112,20 @@ export function setLike(token: string, targetType: "idea" | "comment", targetId:
     method: liked ? "POST" : "DELETE",
     body: JSON.stringify({ targetType, targetId }),
   });
+}
+
+/** "I'd use this": a demand signal, separate from likes. */
+export function setWant(token: string, ideaId: string, wanted: boolean) {
+  return request<{ wanted: boolean; wants: number; campusWants: number }>(`/campus/ideas/${ideaId}/want`, token, { method: wanted ? "POST" : "DELETE", body: "{}" });
+}
+
+export type TeamMessage = { id: string; mine: boolean; name: string; isOwner: boolean; former: boolean; body: string; createdAt: string };
+export function listTeamMessages(token: string, ideaId: string, cursor?: string | null) {
+  const q = cursor ? `?${new URLSearchParams({ cursor })}` : "";
+  return request<{ memberCount: number; messages: TeamMessage[]; nextCursor: string | null }>(`/campus/ideas/${ideaId}/thread${q}`, token);
+}
+export function postTeamMessage(token: string, ideaId: string, body: string) {
+  return request<{ message: TeamMessage }>(`/campus/ideas/${ideaId}/thread`, token, { method: "POST", body: JSON.stringify({ body }) });
 }
 
 export function recordShare(token: string, ideaId: string) {

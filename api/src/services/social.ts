@@ -1,5 +1,5 @@
 import { and, count, db, eq, gt, ideaComments, ideas, reactions, sql } from "../../../packages/db/index";
-import { CampusError, requireUser } from "./campusService";
+import { CampusError, campusOf, requireUser } from "./campusService";
 
 /**
  * Likes, threaded comments, and share counts on sprint ideas.
@@ -16,7 +16,8 @@ const COMMENT_WINDOW_MINUTES = 10;
 const COMMENTS_PER_WINDOW = 20;
 const MAX_OFFSET = 2000;
 
-type Engagement = { likes: number; liked: boolean; comments: number; shares: number };
+type Engagement = { likes: number; liked: boolean; comments: number; shares: number; wants: number; wanted: boolean; campusWants: number };
+const NO_ENGAGEMENT: Engagement = { likes: 0, liked: false, comments: 0, shares: 0, wants: 0, wanted: false, campusWants: 0 };
 
 function uuidArray(ids: string[]) {
     return `{${ids.join(",")}}`;
@@ -41,9 +42,9 @@ function encodeOffset(offset: number) {
 export async function engagementFor(viewerId: string, ideaIds: string[]) {
     const out = new Map<string, Engagement>();
     if (!ideaIds.length) return out;
-    ideaIds.forEach((id) => out.set(id, { likes: 0, liked: false, comments: 0, shares: 0 }));
+    ideaIds.forEach((id) => out.set(id, { ...NO_ENGAGEMENT }));
     const ids = uuidArray(ideaIds);
-    const [likeRows, commentRows, shareRows] = await Promise.all([
+    const [likeRows, commentRows, shareRows, wantRows] = await Promise.all([
         db.execute(sql`
             select target_id::text as id, count(*)::int as n, bool_or(user_id = ${viewerId}) as mine
             from reactions where target_type = 'idea' and target_id = any(${ids}::uuid[]) group by target_id`),
@@ -53,7 +54,17 @@ export async function engagementFor(viewerId: string, ideaIds: string[]) {
         db.execute(sql`
             select idea_id::text as id, count(*)::int as n
             from interactions where kind = 'share' and idea_id = any(${ids}::uuid[]) group by idea_id`),
+        // "I'd use this": total, the viewer's own, and how many are on the viewer's campus (same email domain).
+        db.execute(sql`
+            select r.target_id::text as id, count(*)::int as n, bool_or(r.user_id = ${viewerId}) as mine,
+                   (count(*) filter (where u.email_domain = (select email_domain from users where id = ${viewerId})))::int as campus
+            from reactions r join users u on u.id = r.user_id
+            where r.target_type = 'want' and r.target_id = any(${ids}::uuid[]) group by r.target_id`),
     ]);
+    for (const row of wantRows.rows as { id: string; n: number; mine: boolean; campus: number }[]) {
+        const entry = out.get(row.id);
+        if (entry) { entry.wants = Number(row.n); entry.wanted = Boolean(row.mine); entry.campusWants = Number(row.campus); }
+    }
     for (const row of likeRows.rows as { id: string; n: number; mine: boolean }[]) {
         const entry = out.get(row.id);
         if (entry) { entry.likes = Number(row.n); entry.liked = Boolean(row.mine); }
@@ -72,17 +83,19 @@ export async function engagementFor(viewerId: string, ideaIds: string[]) {
 /** Adds `engagement` to each idea in a response list. */
 export async function withEngagement<T extends { id: string }>(viewerId: string, list: T[]) {
     const counts = await engagementFor(viewerId, list.map((idea) => idea.id));
-    return list.map((idea) => ({ ...idea, engagement: counts.get(idea.id) ?? { likes: 0, liked: false, comments: 0, shares: 0 } }));
+    return list.map((idea) => ({ ...idea, engagement: counts.get(idea.id) ?? { ...NO_ENGAGEMENT } }));
 }
 
 // ---------- comments ----------
 
 async function visibleIdea(viewerId: string, ideaId: string) {
     const viewer = await requireUser(viewerId);
-    const [idea] = await db.select({ id: ideas.id, ownerId: ideas.ownerId, hideName: ideas.hideName, pitch: ideas.pitch, hiddenAt: ideas.hiddenAt })
+    const [idea] = await db.select({ id: ideas.id, ownerId: ideas.ownerId, hideName: ideas.hideName, pitch: ideas.pitch, hiddenAt: ideas.hiddenAt, campusOnly: ideas.campusOnly, campusDomain: ideas.campusDomain })
         .from(ideas).where(eq(ideas.id, ideaId));
     if (!idea || !idea.pitch) throw new CampusError(404, "Idea not found");
     if (idea.hiddenAt && !viewer.isAdmin && viewer.id !== idea.ownerId) throw new CampusError(404, "Idea not found");
+    // Campus-only ideas can't be liked, commented on or wanted from another campus (RULES 17a).
+    if (idea.campusOnly && !viewer.isAdmin && viewer.id !== idea.ownerId && idea.campusDomain !== campusOf(viewer)) throw new CampusError(404, "Idea not found");
     return { viewer, idea };
 }
 
@@ -266,6 +279,19 @@ export async function setReaction(viewerId: string, targetType: "idea" | "commen
     const [row] = await db.select({ n: count() }).from(reactions)
         .where(and(eq(reactions.targetType, targetType), eq(reactions.targetId, targetId)));
     return { liked: on, likes: Number(row?.n ?? 0) };
+}
+
+/** "I'd use this": a demand signal, separate from likes. Returns the new totals. */
+export async function setWant(viewerId: string, ideaId: string, on: boolean) {
+    const { viewer, idea } = await visibleIdea(viewerId, ideaId);
+    if (idea.ownerId === viewer.id) throw new CampusError(400, "This is your own idea");
+    if (on) {
+        await db.insert(reactions).values({ userId: viewer.id, targetType: "want", targetId: ideaId }).onConflictDoNothing();
+    } else {
+        await db.delete(reactions).where(and(eq(reactions.userId, viewer.id), eq(reactions.targetType, "want"), eq(reactions.targetId, ideaId)));
+    }
+    const counts = (await engagementFor(viewer.id, [ideaId])).get(ideaId);
+    return { wanted: on, wants: counts?.wants ?? 0, campusWants: counts?.campusWants ?? 0 };
 }
 
 export async function shareCount(ideaId: string) {

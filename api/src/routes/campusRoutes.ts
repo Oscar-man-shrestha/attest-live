@@ -76,6 +76,12 @@ router.post("/milestones/:id/payment", deals.recordPayment);
 router.post("/milestones/:id/payment/confirm", deals.confirmPayment);
 router.get("/people/:id/record", deals.personReviews);
 
+// Demand signal and team thread
+router.post("/ideas/:id/want", deals.wantIdea(true));
+router.delete("/ideas/:id/want", deals.wantIdea(false));
+router.get("/ideas/:id/thread", deals.listTeamMessages);
+router.post("/ideas/:id/thread", deals.postTeamMessage);
+
 // Gigs board
 router.get("/gigs", deals.listGigs);
 router.post("/gigs", deals.createGig);

@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { forkIdea, recordShare, saveCard, setLike, CampusApiError, type Engagement } from "@/lib/campus-api";
+import { forkIdea, recordShare, saveCard, setLike, setWant, CampusApiError, type Engagement } from "@/lib/campus-api";
 import CommentThread from "./CommentThread";
 
 type Props = {
@@ -38,6 +38,7 @@ const HEART = "M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5
 const BUBBLE = "M4 5.5h16v10.5H9l-5 4V5.5z";
 const SHARE = "M12 3v12M7 8l5-5 5 5M5 14v5h14v-5";
 const BOOKMARK = "M6 3.5h12v17l-6-4-6 4v-17z";
+const USE = "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM8 12.4l2.8 2.8 5.2-6";
 const FORK = "M6 3v12M18 9v12M6 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM18 21a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM9 12h6";
 
 export default function PostActions({ token, idea, viewerId, commentsOpen = false, hideSummary = false, onSavedChange }: Props) {
@@ -65,6 +66,20 @@ export default function PostActions({ token, idea, viewerId, commentsOpen = fals
     } catch (err) {
       setStats((s) => ({ ...s, liked: !next, likes: s.likes + (next ? -1 : 1) }));
       flash(err instanceof CampusApiError ? err.message : "Could not like");
+    }
+  };
+
+  const toggleWant = async () => {
+    if (own) return flash("This is your own idea");
+    const next = !stats.wanted;
+    const before = { wanted: stats.wanted, wants: stats.wants ?? 0, campusWants: stats.campusWants ?? 0 };
+    setStats((s) => ({ ...s, wanted: next, wants: Math.max(0, (s.wants ?? 0) + (next ? 1 : -1)) }));
+    try {
+      const result = await setWant(token, idea.id, next);
+      setStats((s) => ({ ...s, ...result }));
+    } catch (err) {
+      setStats((s) => ({ ...s, ...before }));
+      flash(err instanceof CampusApiError ? err.message : "Could not save");
     }
   };
 
@@ -114,7 +129,10 @@ export default function PostActions({ token, idea, viewerId, commentsOpen = fals
   };
 
   const buttonBase = "min-h-[40px] px-2 sm:px-3 py-1.5 rounded-lg text-[13px] font-medium flex items-center justify-center gap-1.5 transition-colors";
+  const wants = stats.wants ?? 0;
+  const campusWants = stats.campusWants ?? 0;
   const summary = [
+    wants ? `${wants} would use this${campusWants ? ` (${campusWants} on your campus)` : ""}` : null,
     stats.likes ? `${stats.likes} ${stats.likes === 1 ? "like" : "likes"}` : null,
     stats.comments ? `${stats.comments} ${stats.comments === 1 ? "comment" : "comments"}` : null,
     stats.shares ? `${stats.shares} ${stats.shares === 1 ? "share" : "shares"}` : null,
@@ -141,6 +159,18 @@ export default function PostActions({ token, idea, viewerId, commentsOpen = fals
             <span className="text-[12px] sm:text-[13px]">
               {stats.likes > 0 ? stats.likes : (stats.liked ? "Liked" : "Like")}
             </span>
+          </button>
+          <button
+            type="button"
+            onClick={toggleWant}
+            aria-pressed={Boolean(stats.wanted)}
+            aria-label={stats.wanted ? "Remove: I'd use this" : "I'd use this"}
+            title="Tell the builder you'd actually use this. It's a demand signal, separate from likes."
+            className={`${buttonBase} ${stats.wanted ? "text-[#047857] bg-[#ecfdf5]" : "text-[#464555] hover:bg-[#f4f3f9]"} ${own ? "opacity-50" : ""}`}
+          >
+            <Icon path={USE} />
+            <span className="hidden sm:inline">{stats.wanted ? "I'd use it" : "I'd use this"}</span>
+            {wants > 0 && <span className="ledger text-[12px] sm:text-[13px]">{wants}</span>}
           </button>
           <button
             type="button"

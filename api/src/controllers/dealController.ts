@@ -23,6 +23,8 @@ import {
 import { CampusError } from "../services/campusService";
 import * as deals from "../services/dealService";
 import * as gigs from "../services/gigService";
+import * as social from "../services/social";
+import * as teamThread from "../services/teamThreadService";
 
 const idSchema = z.string().uuid();
 
@@ -86,6 +88,13 @@ export const respondToGig = handle(gigResponseSchema, "body", (userId, id, input
 export const closeGig = handle(null, "body", (userId, id) => gigs.closeGig(userId, id));
 export const acceptGigResponse = handle(null, "body", (userId, id) => gigs.acceptResponse(userId, id));
 export const declineGigResponse = handle(null, "body", (userId, id) => gigs.declineResponse(userId, id));
+
+// "I'd use this" demand signal
+export const wantIdea = (on: boolean) => handle(null, "body", (userId, id) => social.setWant(userId, id, on));
+
+// Team thread (owner + active team members only)
+export const listTeamMessages = handle(cursorQuerySchema, "query", (userId, id, input) => teamThread.listTeamMessages(userId, id, input));
+export const postTeamMessage = handle(engagementMessageSchema, "body", (userId, id, input) => teamThread.postTeamMessage(userId, id, input.body));
 
 // Milestones
 export const submitMilestone = handle(submitMilestoneSchema, "body", (userId, id, input) => deals.submitMilestone(userId, id, input));

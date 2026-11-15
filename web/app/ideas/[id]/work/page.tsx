@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import TeamThread from "@/components/campus/TeamThread";
 import {
   addTask,
   checkIn,
@@ -763,11 +764,11 @@ export default function WorkPage() {
                 👥
               </span>
               <h2 className="font-semibold text-[16px] text-[#141b2b]">
-                Team Roster ({activeRoster.length} of 4 seats)
+                Team Roster ({activeRoster.length} of {work.idea.teamMax ?? 6} seats)
               </h2>
             </div>
             <p className="text-[12px] text-[#777587] mt-0.5">
-              1 Author + up to 3 Collaborators. Tasks and signed receipts belong to this team.
+              1 Author + up to {(work.idea.teamMax ?? 6) - 1} Collaborators. Tasks and signed receipts belong to this team.
             </p>
           </div>
 
@@ -957,6 +958,9 @@ export default function WorkPage() {
           </form>
         )}
       </section>
+
+      {/* SECTION: Team thread (owner + active teammates only) */}
+      {token && <TeamThread token={token} ideaId={work.idea.id} />}
 
       {/* SECTION: Task Board & List Status */}
       <section className="rounded-2xl border border-[#c7c4d8] bg-white p-5 shadow-sm space-y-4">

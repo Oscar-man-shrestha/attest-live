@@ -15,6 +15,7 @@ import {
     eq,
     events,
     gigs,
+    gt,
     ideas,
     inArray,
     integrityFlags,
@@ -615,7 +616,7 @@ export async function postMessage(userId: string, engagementId: string, body: st
     const [recent] = await db.select({ n: count() }).from(engagementMessages).where(and(
         eq(engagementMessages.engagementId, engagement.id),
         eq(engagementMessages.userId, author.id),
-        sql`${engagementMessages.createdAt} > ${since}`,
+        gt(engagementMessages.createdAt, since),
     ));
     if (Number(recent?.n ?? 0) >= 10) throw new CampusError(429, "Slow down a little");
     const flag = detectContactDetails(body);

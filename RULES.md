@@ -4,7 +4,7 @@ Agents and humans: break these only with an explicit user decision recorded in M
 
 ## Product
 1. Sign-in needs a verified academic email (any university, worldwide). Attest is not a university product and is not affiliated with any university. Verification expires after a year. (Changed 2026-11-15; was campus domain only.)
-2. No open DMs. Messages exist only inside an engagement and are archived when it closes. No user-facing idea takedown. No active push notifications (transactional email is fine).
+2. No open DMs. Messages exist only inside an engagement (archived when it closes) or inside a team thread (owner and active team members only). No user-facing idea takedown. No active push notifications (transactional email is fine).
 3. Platform-level suspension is admin-only, needs a written reason, and always allows an appeal. Community bans (if ever) stay one-community scoped.
 4. Owner cannot rate their own idea (legacy ratings). Skills are signed only via receipts.
 5. Contribution / receipt defaults stay pending until owner signs.

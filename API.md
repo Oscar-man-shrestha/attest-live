@@ -292,3 +292,11 @@ Campus = same verified email domain. Campus-only ideas and gigs return 404 / are
 | POST | `/campus/gig-responses/:id/decline` | — | Author only |
 
 Engagement responses now include `title` and `gig` (idea may be null for gig deals); deal summaries include `isGig`.
+
+## Demand signal and team thread (added 2026-11-15)
+
+| Method | Path | Zod in | Notes |
+|---|---|---|---|
+| POST / DELETE | `/campus/ideas/:id/want` | — | "I'd use this". Not the owner. Returns `{ wanted, wants, campusWants }`. Idea cards carry the same three fields inside `engagement` |
+| GET | `/campus/ideas/:id/thread` | `cursorQuerySchema` | Team thread, newest first, 30 per page. Owner and active team members only; everyone else gets 404 |
+| POST | `/campus/ideas/:id/thread` | `engagementMessageSchema` | 1–2000 chars, 10 per minute. Teammates get one in-app notice per idea per 6 hours (no email) |

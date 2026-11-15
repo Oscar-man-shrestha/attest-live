@@ -83,6 +83,10 @@ cd packages/db && npx ts-node --transpile-only seed-campus.ts --wipe-probes
 6. **Engagements may belong to a gig instead of an idea** (`engagements.idea_id` nullable, `gig_id` added).
 7. **Visual identity: "lab notebook + proof stamps".** Graph-paper wash, ink-stamp badges for verified states, ticket/receipt cards for money, monospace ledger numbers. Indigo Ideas / amber Problems stay (RULES 12); emerald is money. DESIGN.md updated; the earlier "keep it quiet / no theme" lines are relaxed for stamps and one stamp animation, still no confetti.
 
+## Demand button and team thread decision (2026-11-15, founder said "build them")
+1. **"I'd use this"** on ideas: a demand signal, separate from likes. Stored in `reactions` with `target_type = 'want'`. Cards show the total and how many are on the viewer's campus. The owner can't mark their own idea. It is social signal, not proof (RULES 9 still holds).
+2. **Team thread**: one thread per idea, readable and writable only by the owner and active team members. Stored in the existing `groups` / `group_messages` tables; the legacy group chat page and Socket.IO stay unlinked. No open DMs (RULES 2 amended). People who leave or are removed lose access. New-message notices are in-app only, at most one per person per idea every 6 hours, no email.
+
 ## Known limits (2026-11-15)
 - The MiniLM coursework check is weak (homework 0.40 vs a real study-tool idea 0.42). The keyword check is the real guard; the model flags only scores ≥ 0.5. Revisit with a better zero-shot model if flags miss things.
 - Microsoft (Outlook) sign-in still works only for the Amrita tenant. Everyone else signs in with the email code.
