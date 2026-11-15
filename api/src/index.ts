@@ -21,6 +21,18 @@ import { startMarketplaceWorker } from "./queues/marketplaceQueue";
 
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
+// Launch safety: never run production on the fallback signing secret that is written in this repo.
+if (process.env.NODE_ENV === "production") {
+    const secret = process.env.JWT_SECRET ?? "";
+    if (secret.length < 32 || secret === "embedra_super_secret_jwt_key_2026" || /replace-with/i.test(secret)) {
+        console.error("Refusing to start: set JWT_SECRET to a random string of at least 32 characters in production.");
+        process.exit(1);
+    }
+    if (process.env.ATTEST_TEST_LOGIN_EMAIL || process.env.ATTEST_TEST_LOGIN_CODE) {
+        console.warn("ATTEST_TEST_LOGIN_* is set but ignored in production. Remove it from the environment.");
+    }
+}
+
 const app = express();
 const PORT = Number(process.env.PORT || 5001);
 const isProd = process.env.NODE_ENV === "production";
@@ -58,6 +70,15 @@ app.use(cors({
     },
     credentials: true,
 }));
+app.disable("x-powered-by");
+// Basic security headers (the API only serves JSON).
+app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("Referrer-Policy", "no-referrer");
+    if (isProd) res.setHeader("Strict-Transport-Security", "max-age=15552000; includeSubDomains");
+    next();
+});
 app.use(express.json({ limit: "2mb" }));
 
 const server = http.createServer(app);

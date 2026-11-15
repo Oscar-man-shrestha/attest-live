@@ -36,6 +36,7 @@ import {
 import { CampusError } from "../services/campusService";
 import * as campus from "../services/campusService";
 import * as microsoft from "../services/microsoftAuth";
+import * as google from "../services/googleAuth";
 import * as recommender from "../services/recommender";
 import * as documentsService from "../services/documentService";
 import * as peers from "../services/peers";
@@ -100,6 +101,38 @@ export const microsoftStart = async (req: AuthenticatedRequest, res: Response) =
     } catch (error) {
         return sendError(res, error);
     }
+};
+
+export const googleStart = async (req: AuthenticatedRequest, res: Response) => {
+    try {
+        const next = typeof req.query.next === "string" ? req.query.next : undefined;
+        return res.json(google.googleSignInUrl(next));
+    } catch (error) {
+        return sendError(res, error);
+    }
+};
+
+export const googleCallback = async (req: AuthenticatedRequest, res: Response) => {
+    const parsed = microsoftCallbackSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: "The sign-in link is incomplete. Start again." });
+    try {
+        return res.json(await google.completeGoogleSignIn(parsed.data.code, parsed.data.state));
+    } catch (error) {
+        return sendError(res, error);
+    }
+};
+
+/** Which sign-in methods are set up on this server, so the page never shows a dead button. */
+export const signInMethods = async (_req: AuthenticatedRequest, res: Response) => {
+    const from = process.env.RESEND_FROM?.trim();
+    const mailReady = Boolean(process.env.RESEND_API_KEY?.trim() && from && !/resend\.dev/i.test(from));
+    const testLogin = process.env.NODE_ENV !== "production" && Boolean(process.env.ATTEST_TEST_LOGIN_EMAIL && process.env.ATTEST_TEST_LOGIN_CODE);
+    return res.json({
+        google: google.googleConfigured(),
+        microsoft: Boolean(process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET && process.env.MICROSOFT_REDIRECT_URI && process.env.MICROSOFT_CAMPUS_TENANT_ID),
+        emailCode: mailReady || testLogin,
+        emailCodeTestOnly: !mailReady && testLogin,
+    });
 };
 
 export const microsoftCallback = async (req: AuthenticatedRequest, res: Response) => {

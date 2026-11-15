@@ -22,7 +22,7 @@ How any AI coding agent (or human) should behave in this repo. Read before writi
 - DB: PostgreSQL + pgvector (Supabase)
 - ORM: Drizzle (`packages/db`)
 - Real-time: Socket.IO
-- Auth: Campus JWT (Microsoft Entra + OTP; local test login off production only)
+- Auth: Attest JWT. Three ways in, all limited to university emails: one-time email code, Google (OAuth), Amrita Outlook (Microsoft Entra). Local test login off production only
 - Email/OTP: Resend (free tier)
 - File storage: Supabase Storage; resume bytes deleted after parse
 - Validation: Zod in `packages/types`

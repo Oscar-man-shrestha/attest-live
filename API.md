@@ -300,3 +300,14 @@ Engagement responses now include `title` and `gig` (idea may be null for gig dea
 | POST / DELETE | `/campus/ideas/:id/want` | — | "I'd use this". Not the owner. Returns `{ wanted, wants, campusWants }`. Idea cards carry the same three fields inside `engagement` |
 | GET | `/campus/ideas/:id/thread` | `cursorQuerySchema` | Team thread, newest first, 30 per page. Owner and active team members only; everyone else gets 404 |
 | POST | `/campus/ideas/:id/thread` | `engagementMessageSchema` | 1–2000 chars, 10 per minute. Teammates get one in-app notice per idea per 6 hours (no email) |
+
+## Sign-in methods (added 2026-11-15)
+
+Public, no JWT. All three ways in accept only university emails.
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/auth/campus/methods` | `{ google, microsoft, emailCode, emailCodeTestOnly }`: which methods this server has configured |
+| GET | `/auth/campus/google/start?next=` | Returns `{ url, state }` for Google's consent screen. 503 until `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` are set |
+| POST | `/auth/campus/google/callback` | `{ code, state }` → `{ token, user, next }`. Refuses unverified emails and non-university domains (personal Gmail) with 403 |
+| POST | `/auth/campus/verify` | Now locks a code after 5 wrong tries (429) |

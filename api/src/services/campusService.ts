@@ -93,7 +93,9 @@ type Proposal = {
     blurb?: string;
 };
 
-const otpCodes = new Map<string, { code: string; expires: number }>();
+const otpCodes = new Map<string, { code: string; expires: number; attempts?: number }>();
+/** Wrong guesses allowed per code before it is thrown away (stops brute-forcing the 6 digits). */
+const OTP_MAX_ATTEMPTS = 5;
 /** In-memory OTP request windows: email → timestamps of recent sends. */
 const otpRequestLog = new Map<string, number[]>();
 const OTP_MIN_INTERVAL_MS = 60_000;
@@ -605,7 +607,16 @@ export async function requestCampusCode(email: string) {
 export async function verifyCampusCode(email: string, code: string) {
     const normalized = email.trim().toLowerCase();
     const stored = otpCodes.get(normalized);
-    if (!stored || stored.expires < Date.now() || stored.code !== code.trim()) {
+    if (!stored || stored.expires < Date.now()) {
+        otpCodes.delete(normalized);
+        throw new CampusError(401, "That code is wrong or expired");
+    }
+    if (stored.code !== code.trim()) {
+        stored.attempts = (stored.attempts ?? 0) + 1;
+        if (stored.attempts >= OTP_MAX_ATTEMPTS) {
+            otpCodes.delete(normalized);
+            throw new CampusError(429, "Too many wrong codes. Request a new one.");
+        }
         throw new CampusError(401, "That code is wrong or expired");
     }
 
@@ -624,7 +635,7 @@ async function freshHandle() {
     return `builder_${crypto.randomBytes(5).toString("hex")}`;
 }
 
-async function recordVerification(userId: string, email: string, method: "otp" | "microsoft") {
+async function recordVerification(userId: string, email: string, method: "otp" | "microsoft" | "google") {
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
     await db.insert(academicVerifications).values({ userId, emailDomain: emailDomain(email), method, verifiedAt: now, expiresAt })
@@ -634,7 +645,7 @@ async function recordVerification(userId: string, email: string, method: "otp" |
         });
 }
 
-export async function signInCampusEmail(email: string, fullName?: string | null, method: "otp" | "microsoft" = "otp") {
+export async function signInCampusEmail(email: string, fullName?: string | null, method: "otp" | "microsoft" | "google" = "otp") {
     const normalized = email.trim().toLowerCase();
     if (!isAcademicEmail(normalized)) {
         throw new CampusError(403, "Use your university email to sign in (for example .edu, .ac.in or .edu.np)");
@@ -2363,7 +2374,12 @@ export async function listSaved(userId: string, cursor?: string) {
 }
 
 const HELP = [
-    { q: "Who can sign in?", a: "Anyone with a university email anywhere in the world (.edu, .ac.in, .edu.np and similar). We send a one-time code; the first sign-in creates the account. Amrita students can also use college Outlook. Attest is not affiliated with any university, and your university stays hidden unless you choose to show it." },
+    { q: "Who can sign in?", a: "Anyone with a university email anywhere in the world (.edu, .ac.in, .edu.np and similar). Use Continue with Google if your university mail runs on Google, or get a one-time code by email. Amrita students can also use college Outlook. Personal Gmail accounts don't work. Attest is not affiliated with any university, and your university stays hidden unless you choose to show it." },
+    { q: "What does My campus / Everywhere do?", a: "Your campus is everyone who signed in with the same university email domain. The switch on Ideas, Problems, People and Gigs shows either only them or every campus. You can also mark an idea or gig “Only my campus”, and other universities won't see it at all." },
+    { q: "How does paid work happen?", a: "Attest never holds money. The idea owner and a builder agree a deal split into milestones. The builder submits each one, the owner accepts it (or it auto-accepts after 7 days), the owner pays the builder directly, and both confirm the payment here. Only payments both sides confirm count as proof. Builders pay no fee. Paid work is for people 18 or older." },
+    { q: "What is a gig?", a: "A small job with one milestone. Post “I need this done” or list a service you offer. When the poster accepts a response, it becomes a deal straight away. Gigs show your handle, not your name." },
+    { q: "What is “I'd use this”?", a: "A way to tell a builder there is real demand, separate from likes. The card shows the total and how many are on your campus." },
+    { q: "Can I get help with an assignment here?", a: "No. Graded coursework, exams and assignments are not allowed for either side, paid or free. Posts that read like coursework are reviewed and hidden. See the house rules at /rules." },
     { q: "How do I get from empty to shipping?", a: "Finish your profile → post an idea or a problem → ask classmates on People or wait for offers → accept one teammate → open the workspace → submit a task → the owner signs it → it lands on your proof page." },
     { q: "What is public on an idea?", a: "Owners choose visibility. Minimal shows a short teaser and roles. Standard also shows the full brief. Open can show the approach text campus-wide. Contact email and workspace stay for accepted teammates. First published time is always shown so authorship is clear." },
     { q: "What is the difference between Ideas and Problems?", a: "Ideas are builds looking for teammates. Problems are campus pains — you propose an idea to own the fix. Ideas use indigo; Problems use amber so the boards stay distinct." },

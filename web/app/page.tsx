@@ -59,7 +59,7 @@ export default function HomePage() {
     <div className="paper-grid min-h-[calc(100vh-4rem)]">
       {/* ── Hero ─────────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-5 pt-14 pb-16 sm:pt-20 grid gap-12 lg:grid-cols-[1.15fr_0.85fr] items-center">
-        <div>
+        <div className="min-w-0">
           <p className="animate-rise inline-flex items-center gap-2 text-[#4f46e5]">
             <AttestSeal size={34} />
             <span className="font-serif text-[26px] font-bold tracking-tight text-[#141b2b]">Attest</span>
@@ -93,7 +93,7 @@ export default function HomePage() {
         </div>
 
         {/* Example receipt (illustration) */}
-        <div className="animate-rise delay-2 relative mx-auto w-full max-w-sm lg:rotate-[1.5deg]">
+        <div className="animate-rise delay-2 relative mx-auto w-full min-w-0 max-w-sm lg:rotate-[1.5deg]">
           <div className="ticket shadow-[0_18px_50px_rgba(20,27,43,0.12)]">
             <div className="px-5 pt-5 pb-4">
               <div className="flex items-center justify-between">
@@ -119,7 +119,7 @@ export default function HomePage() {
               </li>
             </ul>
             <div className="ticket-tear" />
-            <div className="px-5 py-4 flex items-center justify-between">
+            <div className="px-5 py-4 flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="serial">Total confirmed</p>
                 <p className="ledger text-[24px] font-bold text-[#141b2b]">₹5,000</p>
@@ -192,7 +192,8 @@ export default function HomePage() {
       <footer className="mx-auto max-w-6xl px-5 pb-12">
         <p className="text-[12px] leading-relaxed text-[#777587]">
           Attest is not affiliated with any university. It is for real projects, never graded coursework, exams or assignments. Paid work is for people 18 or older.
-          Idea visibility controls who sees your details; it does not grant exclusive ownership.
+          Idea visibility controls who sees your details; it does not grant exclusive ownership.{" "}
+          <Link href="/rules" className="font-semibold text-[#141b2b] underline underline-offset-2">Read the house rules</Link>.
         </p>
       </footer>
     </div>

@@ -87,6 +87,13 @@ cd packages/db && npx ts-node --transpile-only seed-campus.ts --wipe-probes
 1. **"I'd use this"** on ideas: a demand signal, separate from likes. Stored in `reactions` with `target_type = 'want'`. Cards show the total and how many are on the viewer's campus. The owner can't mark their own idea. It is social signal, not proof (RULES 9 still holds).
 2. **Team thread**: one thread per idea, readable and writable only by the owner and active team members. Stored in the existing `groups` / `group_messages` tables; the legacy group chat page and Socket.IO stay unlinked. No open DMs (RULES 2 amended). People who leave or are removed lose access. New-message notices are in-app only, at most one per person per idea every 6 hours, no email.
 
+## Google sign-in decision (2026-11-15, founder asked for it)
+1. **Sign in with Google** is a third way in, next to the email code and Amrita Outlook. Many universities run their student mail on Google Workspace, so this lets those students in without waiting for an email code.
+2. **The academic-email rule still applies** (RULES 1). A Google account is accepted only when Google says its email is verified and the address is a university domain. A personal `@gmail.com` account is refused with a message that explains why. To open Attest to any Google account later, change the check in `api/src/services/googleAuth.ts` and record that decision here.
+3. Needs `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `api/.env` (Google Cloud Console → OAuth client, type "Web application"). The redirect URI is `<web origin>/login/google/callback`. Until those are set, the button does not show.
+4. The sign-in page only shows methods that are actually configured (`GET /auth/campus/methods`).
+5. `academic_verifications.method` may now be `google`.
+
 ## Known limits (2026-11-15)
 - The MiniLM coursework check is weak (homework 0.40 vs a real study-tool idea 0.42). The keyword check is the real guard; the model flags only scores ≥ 0.5. Revisit with a better zero-shot model if flags miss things.
 - Microsoft (Outlook) sign-in still works only for the Amrita tenant. Everyone else signs in with the email code.

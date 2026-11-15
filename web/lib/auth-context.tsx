@@ -3,7 +3,8 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { UserResponse, LoginInput, SignupInput } from "@embedra/types";
 import { loginUser, signupUser, getMe, ApiError } from "./api";
-import { completeMicrosoftSignIn, verifyCampusCode } from "./campus-api";
+import { completeMicrosoftSignIn,
+  completeGoogleSignIn, verifyCampusCode } from "./campus-api";
 
 interface AuthContextType {
   user: UserResponse | null;
@@ -13,6 +14,7 @@ interface AuthContextType {
   signup: (input: SignupInput) => Promise<void>;
   verifyCampus: (email: string, code: string) => Promise<{ profileComplete?: boolean }>;
   finishMicrosoft: (code: string, state: string) => Promise<{ profileComplete?: boolean; next: string | null }>;
+  finishGoogle: (code: string, state: string) => Promise<{ profileComplete?: boolean; next: string | null }>;
   setCurrentUser: (user: UserResponse) => void;
   logout: () => void;
 }
@@ -80,6 +82,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { profileComplete: res.user.profileComplete, next: res.next };
   };
 
+  const finishGoogle = async (code: string, state: string) => {
+    const res = await completeGoogleSignIn(code, state);
+    localStorage.setItem(TOKEN_KEY, res.token);
+    setToken(res.token);
+    setUser(res.user);
+    return { profileComplete: res.user.profileComplete, next: res.next };
+  };
+
   const logout = () => {
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
@@ -87,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, signup, verifyCampus, finishMicrosoft, setCurrentUser: setUser, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, signup, verifyCampus, finishMicrosoft, finishGoogle, setCurrentUser: setUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

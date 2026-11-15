@@ -406,7 +406,7 @@ Decisions are in MEMORY.md ("Marketplace Phase 1 decision"). Attest never holds 
 | id | uuid, PK | |
 | user_id | uuid, FK users | |
 | email_domain | text | Domain of the verified address |
-| method | text | `otp` or `microsoft` |
+| method | text | `otp`, `microsoft` or `google` |
 | verified_at | timestamp | Refreshed on every sign-in |
 | expires_at | timestamp | verified_at + 365 days |
 

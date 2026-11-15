@@ -238,6 +238,26 @@ export function verifyCampusCode(email: string, code: string) {
 }
 
 export const MICROSOFT_STATE_KEY = "attest_microsoft_state";
+export const GOOGLE_STATE_KEY = "attest_google_state";
+
+export type SignInMethods = { google: boolean; microsoft: boolean; emailCode: boolean; emailCodeTestOnly: boolean };
+/** Which sign-in methods this server has set up, so the page never shows a dead button. */
+export function getSignInMethods() {
+  return request<SignInMethods>("/auth/campus/methods", null);
+}
+
+export function startGoogleSignIn(next: string | null) {
+  const query = next ? `?next=${encodeURIComponent(next)}` : "";
+  return request<{ url: string; state: string }>(`/auth/campus/google/start${query}`, null);
+}
+
+export function completeGoogleSignIn(code: string, state: string) {
+  return request<{ token: string; user: import("@embedra/types").UserResponse; next: string | null }>(
+    "/auth/campus/google/callback",
+    null,
+    { method: "POST", body: JSON.stringify({ code, state }) },
+  );
+}
 
 export function startMicrosoftSignIn(next: string | null) {
   const query = next ? `?next=${encodeURIComponent(next)}` : "";
