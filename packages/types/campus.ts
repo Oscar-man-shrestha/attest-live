@@ -283,9 +283,9 @@ export type InteractionInput = z.infer<typeof interactionSchema>;
 
 export const addInterestSchema = z.object({ label: z.string().trim().min(1).max(60) });
 
-export const feedQuerySchema = z.object({ cursor: z.string().max(200).optional() });
+export const feedQuerySchema = z.object({ cursor: z.string().max(200).optional(), campus: z.enum(["1"]).optional() });
 
-export const PEOPLE_SCOPES = ["all", "branch", "cohort"] as const;
+export const PEOPLE_SCOPES = ["all", "campus", "branch", "cohort"] as const;
 export const peopleQuerySchema = z.object({
     scope: z.enum(PEOPLE_SCOPES).default("all"),
     cursor: z.string().max(200).optional(),
@@ -455,6 +455,7 @@ export const createSprintIdeaSchema = z.object({
     contactEmail: campusEmailSchema,
     publicWriteup: z.string().trim().max(2500).optional(),
     ...dealFields,
+    campusOnly: z.boolean().default(false),
     notAcademicWork,
 }).superRefine((value, ctx) => {
     if (value.visibility === "minimal" && !(value.blurb && value.blurb.trim().length >= 12)) {
@@ -665,3 +666,37 @@ export function suggestBranch(email: string): (typeof BRANCHES)[number] | null {
     if (/(^|[^a-z])me([^a-z]|$)/.test(local)) return "ME";
     return null;
 }
+
+// ---------- GIGS (quick freelancing) ----------
+export const GIG_KINDS = ["request", "offer"] as const;
+export type GigKind = (typeof GIG_KINDS)[number];
+export const GIG_CATEGORIES = ["Web", "Mobile app", "Design", "Hardware and PCB", "CAD and 3D print", "Data and ML", "Video and content", "Writing and docs", "Tutoring a skill", "Other"] as const;
+export const GIG_DEAL_TYPES = ["paid_fixed", "credit_only"] as const;
+
+export const createGigSchema = z.object({
+    kind: z.enum(GIG_KINDS),
+    title: z.string().trim().min(6).max(100),
+    description: z.string().trim().min(30).max(1500),
+    category: z.enum(GIG_CATEGORIES),
+    dealType: z.enum(GIG_DEAL_TYPES),
+    currency: z.enum(CURRENCIES).nullable().optional(),
+    price: z.number().positive().max(10_000_000).nullable().optional(),
+    deliveryDays: z.number().int().min(1).max(60).nullable().optional(),
+    campusOnly: z.boolean().default(false),
+    notAcademicWork,
+}).superRefine((value, ctx) => {
+    if (value.dealType === "paid_fixed") {
+        if (!value.currency) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Paid gigs need a currency", path: ["currency"] });
+        if (!value.price) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Paid gigs need a price", path: ["price"] });
+    }
+});
+export type CreateGigInput = z.infer<typeof createGigSchema>;
+
+export const gigListQuerySchema = z.object({
+    kind: z.enum(GIG_KINDS).default("request"),
+    campus: z.enum(["1"]).optional(),
+    category: z.enum(GIG_CATEGORIES).optional(),
+    mine: z.enum(["1"]).optional(),
+    cursor: z.string().max(200).optional(),
+});
+export const gigResponseSchema = z.object({ note: z.string().trim().min(12).max(1000) });

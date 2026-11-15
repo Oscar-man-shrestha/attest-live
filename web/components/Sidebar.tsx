@@ -4,6 +4,7 @@ import React from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import AttestSeal from "@/components/brand/AttestSeal";
 
 type NavItem = {
   id: string;
@@ -33,6 +34,7 @@ export default function Sidebar() {
     { id: "ideas", label: "Ideas", icon: "lightbulb", href: "/ideas", hint: "Builds seeking teammates" },
     { id: "people", label: "People", icon: "group", href: "/people", authRequired: true },
     { id: "problems", label: "Problems", icon: "flag", href: "/problems", hint: "Pains needing a builder" },
+    { id: "gigs", label: "Gigs", icon: "bolt", href: "/gigs", authRequired: true, hint: "Quick paid or credit work" },
     { id: "saved", label: "Saved", icon: "bookmark", href: "/saved", authRequired: true },
     { id: "deals", label: "Deals", icon: "handshake", href: "/deals", authRequired: true, hint: "Milestones and payments" },
     { id: "inbox", label: "Inbox", icon: "inbox", href: "/inbox" },
@@ -56,9 +58,7 @@ export default function Sidebar() {
       <div className="flex flex-col">
         <div className="h-16 px-4 flex items-center justify-between border-b border-outline-variant/20">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-7 h-7 rounded-lg bg-primary-container text-on-primary flex items-center justify-center shadow-xs transition-transform duration-150 group-hover:scale-105">
-              <span className="material-symbols-outlined text-[17px]">hub</span>
-            </div>
+            <AttestSeal size={30} className="text-[#4f46e5] transition-transform duration-200 group-hover:rotate-[-8deg]" />
             <span className="font-serif font-bold text-[16px] text-on-surface tracking-tight">
               Attest
             </span>
@@ -98,6 +98,10 @@ export default function Sidebar() {
                 ? active
                   ? "bg-[#fff7ed] text-[#b45309] font-semibold shadow-[inset_2px_0_0_0_#b45309]"
                   : "text-on-surface-variant hover:bg-[#fffbf5] hover:text-[#b45309]"
+                : item.id === "gigs" || item.id === "deals"
+                  ? active
+                    ? "bg-[#ecfdf5] text-[#047857] font-semibold shadow-[inset_2px_0_0_0_#047857]"
+                    : "text-on-surface-variant hover:bg-[#f0fdf4] hover:text-[#047857]"
                 : active
                   ? "bg-surface-container-high text-primary font-semibold shadow-[inset_2px_0_0_0_#4f46e5]"
                   : "text-on-surface-variant hover:bg-surface-container-low hover:text-on-surface";
@@ -167,7 +171,7 @@ export default function Sidebar() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[12px] font-semibold text-on-surface truncate">Sign in</p>
-              <p className="font-meta-xs text-[10px] text-outline truncate">Campus one-time code</p>
+              <p className="font-meta-xs text-[10px] text-outline truncate">University email code</p>
             </div>
           </Link>
         )}

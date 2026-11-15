@@ -74,6 +74,15 @@ cd packages/db && npx ts-node --transpile-only seed-campus.ts
 cd packages/db && npx ts-node --transpile-only seed-campus.ts --wipe-probes
 ```
 
+## Campus layer, gigs and visual identity decision (2026-11-15, founder: "implement if good")
+1. **Campus = same verified email domain.** `users.email_domain` is stored at sign-in. No university partnership is involved.
+2. **My campus / Everywhere switch** on Ideas, Problems, People, the feed and Gigs.
+3. **Campus-only posts.** Ideas and gigs can be limited to the poster's campus (`campus_only`). Other campuses never see them in lists, detail, feed, similar, profile posts or saved.
+4. **"Same campus" badge.** People on the same email domain can see that a post comes from their campus, even when the name is hidden. The university name is still hidden from everyone else unless `show_institution` is on (RULES 6 amended).
+5. **Gigs board** (quick freelancing, emerald accent `#047857`). Two kinds: `request` ("I need this done") and `offer` ("I can do this", a service listing). Shown by handle only. A response accepted by the gig author becomes an active one-milestone deal straight away (both sides already opted in). All Phase 1 money rules apply: Attest never holds money, paid gigs need both 18+, the not-graded-work attestation is required, builders pay 0%. A user can have at most 5 open gigs.
+6. **Engagements may belong to a gig instead of an idea** (`engagements.idea_id` nullable, `gig_id` added).
+7. **Visual identity: "lab notebook + proof stamps".** Graph-paper wash, ink-stamp badges for verified states, ticket/receipt cards for money, monospace ledger numbers. Indigo Ideas / amber Problems stay (RULES 12); emerald is money. DESIGN.md updated; the earlier "keep it quiet / no theme" lines are relaxed for stamps and one stamp animation, still no confetti.
+
 ## Known limits (2026-11-15)
 - The MiniLM coursework check is weak (homework 0.40 vs a real study-tool idea 0.42). The keyword check is the real guard; the model flags only scores ≥ 0.5. Revisit with a better zero-shot model if flags miss things.
 - Microsoft (Outlook) sign-in still works only for the Amrita tenant. Everyone else signs in with the email code.

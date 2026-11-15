@@ -16,6 +16,7 @@ import {
 } from "@/lib/campus-api";
 import IdeaCard from "@/components/campus/IdeaCard";
 import EmptyState from "@/components/campus/EmptyState";
+import CampusSwitch, { useCampusScope } from "@/components/campus/CampusSwitch";
 
 type Tab = "for-you" | "latest";
 
@@ -36,6 +37,7 @@ function IdeasBoardInner() {
   const [q, setQ] = useState(initialQ);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [scope, setScope] = useCampusScope();
 
   useEffect(() => {
     const nextTab = searchParams.get("tab") === "latest" ? "latest" : "for-you";
@@ -49,6 +51,7 @@ function IdeasBoardInner() {
     if (branch) params.branch = branch;
     if (semester) params.semester = semester;
     if (q) params.q = q;
+    if (scope === "campus") params.campus = "1";
     const active = await listSprintIdeas(authToken, params);
     const done = await listSprintIdeas(authToken, { ...params, bucket: "shipped" });
     setIdeas(active.ideas);
@@ -56,7 +59,7 @@ function IdeasBoardInner() {
   };
 
   const loadFeed = async (authToken: string) => {
-    const page = await getForYouFeed(authToken);
+    const page = await getForYouFeed(authToken, null, scope === "campus");
     const { ideas: rows, ...meta } = page;
     setFeed(rows);
     setFeedMeta(meta);
@@ -68,7 +71,7 @@ function IdeasBoardInner() {
     loadLatest(token)
       .then(() => setReady(true))
       .catch((err) => { setError(err.message); setReady(true); });
-  }, [token, tab, branch, semester, q]);
+  }, [token, tab, branch, semester, q, scope]);
 
   useEffect(() => {
     if (!token || tab !== "for-you") return;
@@ -76,7 +79,7 @@ function IdeasBoardInner() {
     loadFeed(token)
       .then(() => setReady(true))
       .catch((err) => { setError(err.message); setReady(true); });
-  }, [token, tab]);
+  }, [token, tab, scope]);
 
   if (!isLoading && !user) return null;
 
@@ -84,7 +87,7 @@ function IdeasBoardInner() {
     if (!token || !feedMeta?.nextCursor) return;
     setLoadingMore(true);
     try {
-      const page = await getForYouFeed(token, feedMeta.nextCursor);
+      const page = await getForYouFeed(token, feedMeta.nextCursor, scope === "campus");
       const seen = new Set(feed.map((row) => row.id));
       setFeed((rows) => [...rows, ...page.ideas.filter((row) => !seen.has(row.id))]);
       setFeedMeta((meta) => (meta ? { ...meta, nextCursor: page.nextCursor } : meta));
@@ -139,9 +142,9 @@ function IdeasBoardInner() {
     <div className="px-5 sm:px-8 py-6 max-w-5xl mx-auto space-y-5">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#4f46e5]">14-day sprint</p>
-          <h1 className="font-serif text-[34px] sm:text-[40px] font-semibold tracking-tight">Ideas</h1>
-          <p className="text-[14px] text-[#777587] mt-1">Builds seeking teammates — like a campus Medium feed with GitHub-style remixes</p>
+          <p className="serial text-[#4f46e5]">Ideas · builds seeking teammates</p>
+          <h1 className="font-serif text-[34px] sm:text-[40px] font-semibold tracking-tight">What students are <span className="hl-indigo">building</span></h1>
+          <p className="text-[14px] text-[#777587] mt-1">Paid, sponsored, open source or for credit. Switch between your campus and every campus.</p>
         </div>
         <div className="flex flex-wrap gap-2 justify-end">
           <Link href="/ideas/new" className="px-3.5 py-2 rounded-lg bg-[#4f46e5] text-white text-[13px] font-semibold transition-transform active:scale-[0.98]">Post idea</Link>
@@ -164,9 +167,12 @@ function IdeasBoardInner() {
         </div>
       </div>
 
-      <div className="flex items-center gap-1">
-        {tabButton("for-you", "For you")}
-        {tabButton("latest", "Latest")}
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-1">
+          {tabButton("for-you", "For you")}
+          {tabButton("latest", "Latest")}
+        </div>
+        <CampusSwitch value={scope} onChange={setScope} />
       </div>
 
       {error && <p className="text-[13px] text-[#ba1a1a]">{error}</p>}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { getInboxBadge } from "@/lib/campus-api";
+import AttestSeal from "@/components/brand/AttestSeal";
 
 interface NavbarProps {
   hasSidebar?: boolean;
@@ -60,10 +61,8 @@ export default function Navbar({ hasSidebar = false }: NavbarProps) {
             id="navbar-logo"
             className={`items-center gap-2 shrink-0 group ${hasSidebar ? "flex md:hidden" : "flex"}`}
           >
-            <div className="w-7 h-7 rounded-lg bg-[#e9edff] flex items-center justify-center text-[#4f46e5] transition-all duration-150 group-hover:bg-[#4f46e5] group-hover:text-white">
-              <span className="material-symbols-outlined text-[16px]">hub</span>
-            </div>
-            <span className="font-semibold text-[15px] text-[#141b2b] tracking-tight">
+            <AttestSeal size={28} className="text-[#4f46e5] transition-transform duration-200 group-hover:rotate-[-8deg]" />
+            <span className="font-serif font-bold text-[17px] text-[#141b2b] tracking-tight">
               Attest
             </span>
           </Link>

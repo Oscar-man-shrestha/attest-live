@@ -1,7 +1,7 @@
 import { and, db, desc, eq, gt, ideas, inArray, interactions, isNotNull, isNull, ne, offers, saves, sql, teamMembers, users } from "../../../packages/db/index";
 import { INTEREST_POOL, INTEREST_TILES, SKILL_POOL } from "../../../packages/types";
 import { interestLabelVectors, nudgeEmbeddings } from "../queues/embeddingQueue";
-import { CampusError, publicIdea, requireUser, savedSet, withIdeaImages } from "./campusService";
+import { CampusError, campusOf, ideaCampusVisible, publicIdea, requireUser, savedSet, withIdeaImages } from "./campusService";
 import { circleMates } from "./peers";
 
 /**
@@ -308,8 +308,9 @@ function encodeCursor(offset: number) {
     return Buffer.from(JSON.stringify({ o: offset }), "utf8").toString("base64url");
 }
 
-export async function forYouFeed(userId: string, cursor?: string) {
+export async function forYouFeed(userId: string, cursor?: string, campusOnly = false) {
     const viewer = await requireUser(userId);
+    const viewerCampus = campusOf(viewer);
     const labels = interestLabelVectors();
     const interests = viewer.interests ?? [];
     const skills = viewer.campusSkills ?? [];
@@ -320,6 +321,8 @@ export async function forYouFeed(userId: string, cursor?: string) {
             isNull(ideas.hiddenAt),
             ne(ideas.teamStatus, "shipped"),
             ne(ideas.ownerId, viewer.id),
+            ideaCampusVisible(viewerCampus),
+            ...(campusOnly ? [eq(ideas.campusDomain, viewerCampus)] : []),
         )).orderBy(desc(ideas.createdAt)).limit(CANDIDATES),
         viewerSignals(viewer.id),
         db.select({ ideaId: teamMembers.ideaId }).from(teamMembers)
@@ -427,7 +430,7 @@ export async function forYouFeed(userId: string, cursor?: string) {
     const saved = await savedSet(viewer.id, "idea", page.map((row) => row.idea.id));
 
     const cards = page.map((row) => ({
-        ...publicIdea(row.idea, saved.has(row.idea.id), null, 0, { viewerId: viewer.id }),
+        ...publicIdea(row.idea, saved.has(row.idea.id), null, 0, { viewerId: viewer.id, viewerCampus }),
         reasons: row.reasons,
         topics: row.topics,
     }));
@@ -533,6 +536,7 @@ export async function similarIdeas(userId: string, ideaId: string) {
         isNull(ideas.hiddenAt),
         isNotNull(ideas.embedding),
         ne(ideas.id, ideaId),
+        ideaCampusVisible(campusOf(viewer)),
     )).orderBy(sql`${ideas.embedding} <=> ${literal}::extensions.vector`).limit(4);
     const labels = interestLabelVectors();
     const saved = await savedSet(viewer.id, "idea", rows.map((row) => row.id));
@@ -540,7 +544,7 @@ export async function similarIdeas(userId: string, ideaId: string) {
         ideas: rows
             .map((row) => ({ row, sim: cosine(source.embedding, row.embedding) }))
             .filter(({ sim }) => sim >= 0.3)
-            .map(({ row }) => ({ ...publicIdea(row, saved.has(row.id), null, 0, { viewerId: viewer.id }), topics: topicsFor(row, labels) })),
+            .map(({ row }) => ({ ...publicIdea(row, saved.has(row.id), null, 0, { viewerId: viewer.id, viewerCampus: campusOf(viewer) }), topics: topicsFor(row, labels) })),
     };
 }
 

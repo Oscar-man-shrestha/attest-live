@@ -138,7 +138,7 @@ export const feed = async (req: AuthenticatedRequest, res: Response) => {
     const parsed = feedQuerySchema.safeParse(req.query);
     if (!parsed.success) return res.status(400).json({ error: "Bad cursor" });
     try {
-        const result = await recommender.forYouFeed(userId(req), parsed.data.cursor);
+        const result = await recommender.forYouFeed(userId(req), parsed.data.cursor, parsed.data.campus === "1");
         return res.json({ ...result, ideas: await campus.withForkCounts(await social.withEngagement(userId(req), result.ideas)) });
     } catch (error) {
         return sendError(res, error);

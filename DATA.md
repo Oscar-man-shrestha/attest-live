@@ -520,3 +520,68 @@ Index on (engagement_id, created_at). Cursor-paginated. Read-only once the engag
 | created_at | timestamp | |
 
 Index on (status, created_at). A confirmed flag hides the post (`hidden_at`); it never suspends automatically.
+
+## Campus layer and gigs (added 2026-11-15)
+
+Decisions are in MEMORY.md ("Campus layer, gigs and visual identity decision"). Campus means the same verified email domain.
+
+### users (added column)
+| Column | Type | Notes |
+|---|---|---|
+| email_domain | text, nullable | Lowercase domain of `email`, set at sign-in and backfilled. Indexed. Drives every campus filter |
+
+### ideas (added columns)
+| Column | Type | Notes |
+|---|---|---|
+| campus_domain | text, nullable | Owner's `email_domain` when posted |
+| campus_only | boolean, default false | When true, only viewers on `campus_domain` (and the owner) can see it anywhere |
+
+### problems (added column)
+| Column | Type | Notes |
+|---|---|---|
+| campus_domain | text, nullable | Author's `email_domain` when posted. Used by the My campus filter |
+
+### gigs
+Quick freelancing posts. Shown by handle only.
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, PK | |
+| author_id | uuid, FK users | |
+| kind | text | `request` (author needs work done; author is the requester) or `offer` (author sells a service; author is the builder) |
+| title | text | 6–100 chars |
+| description | text | 30–1500 chars |
+| category | text | One of `GIG_CATEGORIES` in `packages/types/campus.ts` |
+| deal_type | text | `paid_fixed` or `credit_only` |
+| currency | text, nullable | Required when paid |
+| price_minor | int, nullable | Required (> 0) when paid. Fixed price of the single milestone |
+| delivery_days | int, nullable | 1–60, optional |
+| campus_domain | text, nullable | Author's `email_domain` |
+| campus_only | boolean, default false | As on ideas |
+| status | text, default `open` | `open` or `closed`. A request closes when someone is hired; an offer stays open |
+| not_academic_attested_at | timestamp | Required |
+| hidden_at | timestamp, nullable | Set when an admin confirms a coursework flag |
+| created_at | timestamp | |
+
+Index on (status, kind, created_at). At most 5 open gigs per author.
+
+### gig_responses
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, PK | |
+| gig_id | uuid, FK gigs | |
+| user_id | uuid, FK users | Never the gig author |
+| note | text | 12–1000 chars. Only the gig author and the responder can read it |
+| status | text, default `new` | `new`, `hired`, `declined` |
+| engagement_id | uuid, FK engagements, nullable | Set when hired |
+| created_at | timestamp | |
+
+Unique on (gig_id, user_id). Accepting a response creates an `active` engagement with one milestone (title = gig title, amount = gig price).
+
+### engagements (changed)
+| Column | Type | Notes |
+|---|---|---|
+| idea_id | uuid, FK ideas, **nullable** | Null for gig deals |
+| gig_id | uuid, FK gigs, nullable | Set for gig deals. Exactly one of idea_id / gig_id is set |
+
+### integrity_flags (changed)
+`target_type` may also be `gig`. Confirming hides the gig.

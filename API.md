@@ -271,3 +271,24 @@ All under `/api/v1/campus`, JWT required. Zod schemas live in `packages/types/ca
 | POST | `/admin/users/:id/unsuspend` | — | Admin |
 
 Changed: `POST /auth/campus/request-code` and `/verify` accept any academic email (`isAcademicEmail`). `POST /auth/signup` and `/auth/login` return 410. `POST /campus/ideas` takes `dealType`, `currency`, `budget`, `licence`, `notAcademicWork`; `POST /campus/problems` takes `notAcademicWork`.
+
+## Campus layer and gigs (added 2026-11-15)
+
+Campus = same verified email domain. Campus-only ideas and gigs return 404 / are left out of every list for other domains.
+
+| Method | Path | Zod in | Notes |
+|---|---|---|---|
+| GET | `/campus/ideas?campus=1` | — | Only ideas from the viewer's campus. Cards carry `sameCampus`, `campusOnly` |
+| GET | `/campus/feed?campus=1` | `feedQuerySchema` | For-you feed limited to the viewer's campus |
+| GET | `/campus/problems?campus=1` | — | Problems from the viewer's campus. Cards carry `sameCampus` |
+| GET | `/campus/people?scope=campus` | `peopleQuerySchema` | People on the viewer's email domain |
+| POST | `/campus/ideas` | `createSprintIdeaSchema` | New optional `campusOnly` |
+| GET | `/campus/gigs` | `gigListQuerySchema` | `kind=request\|offer`, `campus=1`, `category`, `mine=1`, cursor. Open, visible gigs, 20 per page |
+| POST | `/campus/gigs` | `createGigSchema` | Paid gigs need the author 18+; `notAcademicWork: true` required; max 5 open gigs |
+| GET | `/campus/gigs/:id` | — | Author sees all responses; a responder sees only their own |
+| POST | `/campus/gigs/:id/respond` | `gigResponseSchema` | Once per user; not the author; paid gigs need the responder 18+ |
+| POST | `/campus/gigs/:id/close` | — | Author only |
+| POST | `/campus/gig-responses/:id/accept` | — | Author only. Creates an **active** one-milestone engagement and returns `engagementId`. A request gig closes; an offer stays open |
+| POST | `/campus/gig-responses/:id/decline` | — | Author only |
+
+Engagement responses now include `title` and `gig` (idea may be null for gig deals); deal summaries include `isGig`.

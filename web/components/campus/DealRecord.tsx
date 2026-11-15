@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { DEAL_TYPE_LABELS, type DealType } from "@embedra/types";
 import { getPersonRecord, type PersonRecord } from "@/lib/campus-api";
+import Stamp from "@/components/brand/Stamp";
 
 /** Score spread for one review dimension: a row of five bars, never an average (RULES 19). */
 function Spread({ label, counts }: { label: string; counts: number[] }) {
@@ -59,7 +60,7 @@ export default function DealRecord({ token, personId, self }: { token: string; p
                   {deal.role === "builder" ? "Built" : "Requested"} · {DEAL_TYPE_LABELS[deal.dealType as DealType] ?? deal.dealType} · {deal.milestonesDone} milestone{deal.milestonesDone === 1 ? "" : "s"} accepted
                 </p>
               </div>
-              {deal.paidConfirmed && <span className="shrink-0 rounded-full bg-[#ecfdf5] px-2 py-0.5 text-[11px] font-semibold text-[#047857]">✓ {deal.paidConfirmed} paid</span>}
+              {deal.paidConfirmed && <Stamp flat icon="verified" className="shrink-0">{deal.paidConfirmed} paid</Stamp>}
             </li>
           ))}
         </ul>

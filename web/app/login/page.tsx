@@ -66,7 +66,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] px-5 py-12">
+    <div className="relative min-h-[calc(100vh-4rem)] px-5 py-12 paper-grid">
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_70%_50%_at_100%_0%,_#dce2f7_0%,_transparent_55%),radial-gradient(ellipse_50%_40%_at_0%_100%,_#e9edff_0%,_transparent_50%)]"

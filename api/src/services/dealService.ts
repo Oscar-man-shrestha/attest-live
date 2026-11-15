@@ -14,6 +14,7 @@ import {
     engagements,
     eq,
     events,
+    gigs,
     ideas,
     inArray,
     integrityFlags,
@@ -46,7 +47,7 @@ type MilestoneRow = typeof milestones.$inferSelect;
 
 const ACCEPTANCE_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
 const REVIEW_REVEAL_MS = 14 * 24 * 60 * 60 * 1000;
-const MAX_ACTIVE_PAID_PER_BUILDER = 2;
+export const MAX_ACTIVE_PAID_PER_BUILDER = 2;
 const PAGE = 20;
 const MESSAGE_PAGE = 30;
 
@@ -67,12 +68,12 @@ function decodeCursor(cursor?: string) {
     }
 }
 
-async function logEvent(kind: string, actorId: string | null, targetType: string, targetId: string, payload?: unknown) {
+export async function logEvent(kind: string, actorId: string | null, targetType: string, targetId: string, payload?: unknown) {
     await db.insert(events).values({ kind, actorId, targetType, targetId, payload: payload ?? null });
 }
 
 /** In-app notice + transactional email (no push; RULES 2). */
-async function notifyUser(user: Pick<UserRow, "id" | "email">, subject: string, body: string, targetId: string) {
+export async function notifyUser(user: Pick<UserRow, "id" | "email">, subject: string, body: string, targetId: string) {
     await db.insert(notices).values({ userId: user.id, body, targetId });
     enqueueMail({ to: user.email, subject, text: `${body}\n\nOpen Attest → Deals to respond.` });
 }
@@ -97,13 +98,13 @@ function roleIn(engagement: EngagementRow, user: UserRow): "requester" | "builde
     throw new CampusError(404, "Deal not found");
 }
 
-async function requireWriter(userId: string) {
+export async function requireWriter(userId: string) {
     const user = await requireUser(userId);
     if (user.suspendedAt) throw new CampusError(403, "Your account is suspended. You can still read and send an appeal.");
     return user;
 }
 
-async function activePaidCount(builderId: string) {
+export async function activePaidCount(builderId: string) {
     const rows = await db.select({ dealType: engagements.dealType }).from(engagements).where(and(
         eq(engagements.builderId, builderId),
         eq(engagements.status, "active"),
@@ -123,7 +124,12 @@ function reviewRevealed(engagement: EngagementRow, count: number) {
 
 async function engagementDto(engagement: EngagementRow, viewer: UserRow) {
     const role = roleIn(engagement, viewer);
-    const [idea] = await db.select({ id: ideas.id, title: ideas.title }).from(ideas).where(eq(ideas.id, engagement.ideaId));
+    const [idea] = engagement.ideaId
+        ? await db.select({ id: ideas.id, title: ideas.title }).from(ideas).where(eq(ideas.id, engagement.ideaId))
+        : [];
+    const [gig] = engagement.gigId
+        ? await db.select({ id: gigs.id, title: gigs.title }).from(gigs).where(eq(gigs.id, engagement.gigId))
+        : [];
     const people = await db.select().from(users).where(inArray(users.id, [engagement.requesterId, engagement.builderId]));
     const byId = new Map(people.map((p) => [p.id, p]));
     const steps = await db.select().from(milestones).where(eq(milestones.engagementId, engagement.id)).orderBy(asc(milestones.position));
@@ -140,6 +146,8 @@ async function engagementDto(engagement: EngagementRow, viewer: UserRow) {
         id: engagement.id,
         role,
         idea: idea ?? null,
+        gig: gig ?? null,
+        title: idea?.title ?? gig?.title ?? "Deal",
         requester: party(byId.get(engagement.requesterId)),
         builder: party(byId.get(engagement.builderId)),
         dealType: engagement.dealType,
@@ -295,8 +303,11 @@ export async function listEngagements(userId: string, query: { cursor?: string }
     const rows = await db.select().from(engagements).where(and(...filters))
         .orderBy(desc(engagements.createdAt), desc(engagements.id)).limit(PAGE + 1);
     const page = rows.slice(0, PAGE);
-    const ideaRows = page.length ? await db.select({ id: ideas.id, title: ideas.title }).from(ideas).where(inArray(ideas.id, page.map((r) => r.ideaId))) : [];
-    const titles = new Map(ideaRows.map((r) => [r.id, r.title]));
+    const ideaIds = page.map((r) => r.ideaId).filter((id): id is string => Boolean(id));
+    const gigIds = page.map((r) => r.gigId).filter((id): id is string => Boolean(id));
+    const ideaRows = ideaIds.length ? await db.select({ id: ideas.id, title: ideas.title }).from(ideas).where(inArray(ideas.id, ideaIds)) : [];
+    const gigRows = gigIds.length ? await db.select({ id: gigs.id, title: gigs.title }).from(gigs).where(inArray(gigs.id, gigIds)) : [];
+    const titles = new Map([...ideaRows, ...gigRows].map((r) => [r.id, r.title]));
     const people = page.length ? await db.select().from(users).where(inArray(users.id, [...new Set(page.flatMap((r) => [r.requesterId, r.builderId]))])) : [];
     const byId = new Map(people.map((p) => [p.id, p]));
     const stepRows = page.length ? await db.select({ engagementId: milestones.engagementId, status: milestones.status })
@@ -310,7 +321,8 @@ export async function listEngagements(userId: string, query: { cursor?: string }
             return {
                 id: row.id,
                 role,
-                ideaTitle: titles.get(row.ideaId) ?? "",
+                ideaTitle: titles.get(row.ideaId ?? row.gigId ?? "") ?? "",
+                isGig: Boolean(row.gigId),
                 otherHandle: other?.username ?? null,
                 dealType: row.dealType,
                 total: formatMoney(row.totalAmountMinor, row.currency),
@@ -531,17 +543,18 @@ export async function reviewSummaryFor(personId: string) {
 /** Deal record for proof pages: completed work with both-sides confirmation. */
 export async function dealRecordFor(personId: string) {
     const rows = await db.execute(sql`
-        select e.id, e.deal_type, e.currency, i.title,
+        select e.id, e.deal_type, e.currency, coalesce(i.title, g.title) as title,
                count(m.id) filter (where m.status in ('accepted','auto_accepted','payment_confirmed'))::int as done,
                count(m.id) filter (where m.status = 'payment_confirmed')::int as paid_done,
                coalesce(sum(m.amount_minor) filter (where m.status = 'payment_confirmed'), 0)::int as paid_minor,
                e.completed_at,
                case when e.builder_id = ${personId} then 'builder' else 'requester' end as role
         from engagements e
-        join ideas i on i.id = e.idea_id
+        left join ideas i on i.id = e.idea_id
+        left join gigs g on g.id = e.gig_id
         left join milestones m on m.engagement_id = e.id
         where (e.builder_id = ${personId} or e.requester_id = ${personId}) and e.status in ('active','completed')
-        group by e.id, i.title
+        group by e.id, i.title, g.title
         order by e.created_at desc
         limit 20`);
     const list = rows.rows as { id: string; deal_type: string; currency: string | null; title: string; done: number; paid_done: number; paid_minor: number; completed_at: Date | null; role: string }[];
@@ -681,6 +694,8 @@ export async function listIntegrityFlags(userId: string, query: { cursor?: strin
     const titles = new Map<string, string>();
     if (ideaIds.length) (await db.select({ id: ideas.id, title: ideas.title }).from(ideas).where(inArray(ideas.id, ideaIds))).forEach((r) => titles.set(r.id, r.title));
     if (problemIds.length) (await db.select({ id: problems.id, title: problems.title }).from(problems).where(inArray(problems.id, problemIds))).forEach((r) => titles.set(r.id, r.title));
+    const flaggedGigIds = page.filter((f) => f.targetType === "gig").map((f) => f.targetId);
+    if (flaggedGigIds.length) (await db.select({ id: gigs.id, title: gigs.title }).from(gigs).where(inArray(gigs.id, flaggedGigIds))).forEach((r) => titles.set(r.id, r.title));
     const appeals = await db.select({ id: users.id, username: users.username, suspendedReason: users.suspendedReason, suspensionAppeal: users.suspensionAppeal, appealedAt: users.appealedAt })
         .from(users).where(and(sql`${users.suspendedAt} is not null`, sql`${users.appealedAt} is not null`)).limit(PAGE);
     const last = page[page.length - 1];
@@ -711,6 +726,7 @@ export async function resolveIntegrityFlag(userId: string, flagId: string, actio
         // Confirmed graded-coursework requests are hidden, never auto-suspended (RULES 17).
         if (flag.targetType === "idea") await db.update(ideas).set({ hiddenAt: new Date() }).where(eq(ideas.id, flag.targetId));
         if (flag.targetType === "problem") await db.update(problems).set({ hiddenAt: new Date() }).where(eq(problems.id, flag.targetId));
+        if (flag.targetType === "gig") await db.update(gigs).set({ hiddenAt: new Date(), status: "closed" }).where(eq(gigs.id, flag.targetId));
         if (flag.targetType === "engagement") {
             await db.update(engagements).set({ status: "cancelled", cancelledAt: new Date(), cancelReason: "Removed: graded coursework is not allowed on Attest" })
                 .where(and(eq(engagements.id, flag.targetId), inArray(engagements.status, ["proposed", "active"])));

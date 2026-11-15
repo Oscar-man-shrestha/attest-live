@@ -34,7 +34,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, [isLoading, user, pathname, router]);
 
   return (
-    <div className="min-h-screen bg-[#f9f9ff]">
+    <div className="min-h-screen paper-grid">
       {/* Fixed sidebar — only for authenticated users, hidden on mobile */}
       {hasSidebar && <Sidebar />}
 

@@ -18,6 +18,7 @@ import PostActions from "./PostActions";
 import { Avatar, timeAgo } from "./CommentThread";
 import { useReadTracking } from "@/lib/use-read-tracking";
 import DealBadge from "./DealBadge";
+import CampusChips from "./CampusChips";
 
 function seatBadge(idea: SprintIdea) {
   if (idea.teamStatus === "shipped") return { label: "IDEA · SHIPPED", open: false };
@@ -237,7 +238,10 @@ export default function SprintIdeaView({ ideaId }: { ideaId: string }) {
             {idea.isSmall ? ` · small, ${idea.hourCap}h cap` : ""}
             {typeof idea.collaboratorCount === "number" ? ` · ${idea.collaboratorCount}/${(idea.teamMax ?? 6) - 1} seats filled` : ""}
           </p>
-          <DealBadge dealType={idea.dealType} currency={idea.currency} budgetMinor={idea.budgetMinor} licence={idea.licence} />
+          <div className="flex flex-wrap items-center gap-1.5">
+            <DealBadge dealType={idea.dealType} currency={idea.currency} budgetMinor={idea.budgetMinor} licence={idea.licence} />
+            <CampusChips sameCampus={idea.sameCampus} campusOnly={idea.campusOnly} />
+          </div>
           {idea.compensationSentence && <p>{idea.compensationSentence}</p>}
           {idea.problemTitle && <p className="text-[13px] text-[#4f46e5]">From a problem: {idea.problemTitle}</p>}
           {idea.duplicateOfId && <p className="text-[13px] text-[#777587]">Remix of another card. Only the public slice was copied; private notes were not.</p>}

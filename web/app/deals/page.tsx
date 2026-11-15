@@ -48,7 +48,7 @@ export default function DealsPage() {
 
   return (
     <div className="px-5 sm:px-8 py-6 max-w-3xl mx-auto">
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-[#047857]">Deals</p>
+      <p className="serial text-[#047857]">Deals · milestones and payments</p>
       <h1 className="font-serif text-[32px] font-semibold tracking-tight">Your deals</h1>
       <p className="text-[14px] text-[#464555] mt-1">
         Agreements between an idea owner and a builder, split into milestones. Attest never holds money: paid deals are paid directly, and both sides confirm each payment here.
@@ -68,19 +68,19 @@ export default function DealsPage() {
       <ul className="mt-6 space-y-3">
         {(deals || []).map((deal) => (
           <li key={deal.id}>
-            <Link href={`/deals/${deal.id}`} className="block rounded-2xl border border-[#e4e2ee] bg-white p-4 hover:border-[#c7c4d8] transition-colors">
+            <Link href={`/deals/${deal.id}`} className="ticket card-lift block p-4">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="font-semibold text-[15px] text-[#141b2b] truncate">{deal.ideaTitle}</p>
                   <p className="text-[12px] text-[#777587] mt-0.5">
                     {deal.role === "requester" ? "You're paying/crediting" : "You're building for"} @{deal.otherHandle} · {DEAL_TYPE_LABELS[deal.dealType as DealType] ?? deal.dealType}
-                    {deal.total ? ` · ${deal.total}` : ""}
+                    {deal.isGig ? " · Gig" : ""}
                   </p>
                 </div>
                 <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold capitalize ${STATUS_STYLE[deal.status]}`}>{deal.status}</span>
               </div>
               <div className="mt-3 flex items-center justify-between text-[12px]">
-                <span className="text-[#464555]">{deal.milestonesDone}/{deal.milestonesTotal} milestones done</span>
+                <span className="text-[#464555]"><span className="ledger font-semibold">{deal.milestonesDone}/{deal.milestonesTotal}</span> milestones done{deal.total ? <> · <span className="ledger font-semibold text-[#047857]">{deal.total}</span></> : null}</span>
                 {deal.needsYou && <span className="font-semibold text-[#b45309]">Needs you</span>}
               </div>
             </Link>

@@ -1,5 +1,5 @@
 import { and, count, db, desc, eq, follows, ideas, isNotNull, isNull, lt, proofPages, sql, tasks, teamMembers, users } from "../../../packages/db/index";
-import { CampusError, publicIdea, requireUser, savedSet, withForkCounts } from "./campusService";
+import { CampusError, campusOf, ideaCampusVisible, publicIdea, requireUser, savedSet, withForkCounts } from "./campusService";
 import { storageUploadErrorMessage, supabase, supabaseBucket } from "./supabaseClient";
 import { circles } from "./peers";
 import { withEngagement } from "./social";
@@ -189,7 +189,7 @@ export async function campusProfile(viewerId: string, personId: string) {
 export async function profilePosts(viewerId: string, personId: string, cursor?: string) {
     const viewer = await requireUser(viewerId);
     const filters = [eq(ideas.ownerId, personId), isNotNull(ideas.pitch), isNull(ideas.hiddenAt)];
-    if (viewer.id !== personId) filters.push(eq(ideas.hideName, false));
+    if (viewer.id !== personId) filters.push(eq(ideas.hideName, false), ideaCampusVisible(campusOf(viewer)));
     const at = decodeCursor(cursor);
     if (at) filters.push(lt(ideas.createdAt, at));
     const rows = await db.select().from(ideas).where(and(...filters)).orderBy(desc(ideas.createdAt)).limit(POSTS_PAGE + 1);
@@ -197,7 +197,7 @@ export async function profilePosts(viewerId: string, personId: string, cursor?: 
     const saved = await savedSet(viewer.id, "idea", page.map((row) => row.id));
     const last = page[page.length - 1];
     return {
-        ideas: await withForkCounts(await withEngagement(viewer.id, page.map((row) => publicIdea(row, saved.has(row.id), null, 0, { viewerId: viewer.id })))),
+        ideas: await withForkCounts(await withEngagement(viewer.id, page.map((row) => publicIdea(row, saved.has(row.id), null, 0, { viewerId: viewer.id, viewerCampus: campusOf(viewer) })))),
         nextCursor: rows.length > POSTS_PAGE && last ? Buffer.from(last.createdAt.toISOString(), "utf8").toString("base64url") : null,
     };
 }

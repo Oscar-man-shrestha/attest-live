@@ -147,13 +147,28 @@ export function toPublicUser(user: UserRow) {
     };
 }
 
+/** Campus = same verified email domain. */
+export function campusOf(user: Pick<UserRow, "email" | "emailDomain">) {
+    return user.emailDomain ?? emailDomain(user.email);
+}
+
+/** SQL guard: campus-only ideas are visible only to their own campus (RULES 17a). */
+export function ideaCampusVisible(viewerCampus: string) {
+    return or(eq(ideas.campusOnly, false), eq(ideas.campusDomain, viewerCampus))!;
+}
+
+function assertIdeaCampus(idea: IdeaRow, viewer: UserRow) {
+    if (!idea.campusOnly || idea.ownerId === viewer.id || viewer.isAdmin) return;
+    if (idea.campusDomain !== campusOf(viewer)) throw new CampusError(404, "Idea not found");
+}
+
 /** What other users may see of someone's institution (RULES 6). */
 export function institutionFor(user: Pick<UserRow, "university" | "showInstitution">) {
     return user.showInstitution ? user.university : null;
 }
 
 /** Inline, cheap keyword check. Adds a pending integrity flag for admin review; never blocks the post. */
-export async function flagIfAcademic(targetType: "idea" | "problem" | "engagement", targetId: string, text: string) {
+export async function flagIfAcademic(targetType: "idea" | "problem" | "engagement" | "gig", targetId: string, text: string) {
     const hit = detectAcademicRequest(text);
     if (!hit) return null;
     await db.insert(integrityFlags).values({ targetType, targetId, source: "keyword", label: "graded_coursework", matched: hit.matched });
@@ -360,7 +375,7 @@ export function publicIdea(
     saved: boolean,
     problemTitle?: string | null,
     forkCount = 0,
-    opts?: { viewerIsMember?: boolean; viewerId?: string },
+    opts?: { viewerIsMember?: boolean; viewerId?: string; viewerCampus?: string },
 ) {
     const visibility = (idea.visibility === "minimal" || idea.visibility === "open" ? idea.visibility : "standard") as "minimal" | "standard" | "open";
     const member = Boolean(opts?.viewerIsMember);
@@ -401,6 +416,8 @@ export function publicIdea(
         currency: idea.currency,
         budgetMinor: idea.budgetMinor,
         licence: idea.licence,
+        campusOnly: idea.campusOnly,
+        sameCampus: Boolean(opts?.viewerCampus && idea.campusDomain && idea.campusDomain === opts.viewerCampus),
     };
 }
 
@@ -425,7 +442,7 @@ export async function withForkCounts<T extends { id: string }>(list: T[]) {
     return list.map((idea) => ({ ...idea, forkCount: forks.get(idea.id) ?? 0 }));
 }
 
-function publicProblem(problem: ProblemRow, saved: boolean, ideaId: string | null, sunk: boolean, viewerId: string) {
+function publicProblem(problem: ProblemRow, saved: boolean, ideaId: string | null, sunk: boolean, viewerId: string, viewerCampus?: string) {
     return {
         id: problem.id,
         title: problem.title,
@@ -445,6 +462,7 @@ function publicProblem(problem: ProblemRow, saved: boolean, ideaId: string | nul
         freshLine: problem.freshLine,
         hidden: Boolean(problem.hiddenAt),
         saved,
+        sameCampus: Boolean(viewerCampus && problem.campusDomain && problem.campusDomain === viewerCampus),
     };
 }
 
@@ -491,6 +509,7 @@ async function insertIdeaRecord(owner: UserRow, fields: {
     budgetMinor?: number | null;
     licence?: string | null;
     notAcademicAttestedAt?: Date | null;
+    campusOnly?: boolean;
 }) {
     const domainId = await campusDomainId();
     const snap = authorLabel(fields.hideName, owner.displayName, owner.branch, owner.semester);
@@ -528,6 +547,8 @@ async function insertIdeaRecord(owner: UserRow, fields: {
         budgetMinor: fields.budgetMinor ?? null,
         licence: fields.licence ?? null,
         notAcademicAttestedAt: fields.notAcademicAttestedAt ?? null,
+        campusDomain: campusOf(owner),
+        campusOnly: Boolean(fields.campusOnly),
     }).returning();
     const [group] = await db.insert(groups).values({ ideaId: idea.id }).returning();
     await db.insert(groupMembers).values({ groupId: group.id, userId: owner.id });
@@ -626,6 +647,7 @@ export async function signInCampusEmail(email: string, fullName?: string | null,
     if (user) {
         const fill: Partial<typeof users.$inferInsert> = {};
         if (!user.university && university) fill.university = university;
+        if (!user.emailDomain) fill.emailDomain = emailDomain(normalized);
         if (!user.displayName && cleanName) fill.displayName = cleanName;
         if (!user.degree && guess.degree) fill.degree = guess.degree;
         if (!user.graduationYear && guess.graduationYear) fill.graduationYear = guess.graduationYear;
@@ -638,6 +660,7 @@ export async function signInCampusEmail(email: string, fullName?: string | null,
         const [created] = await db.insert(users).values({
             username,
             email: normalized,
+            emailDomain: emailDomain(normalized),
             passwordHash,
             displayName: cleanName,
             university,
@@ -700,14 +723,17 @@ export async function saveProfile(userId: string, input: CampusProfileInput) {
     return { user: toPublicUser(updated) };
 }
 
-export async function listIdeas(userId: string, query: { branch?: string; semester?: string; q?: string; cursor?: string; bucket?: string }) {
+export async function listIdeas(userId: string, query: { branch?: string; semester?: string; q?: string; cursor?: string; bucket?: string; campus?: string }) {
     const viewer = await requireUser(userId);
+    const viewerCampus = campusOf(viewer);
     const bucket = query.bucket === "shipped" ? "shipped" : "active";
     const filters = [
         isNotNull(ideas.pitch),
         isNull(ideas.hiddenAt),
         bucket === "shipped" ? eq(ideas.teamStatus, "shipped") : ne(ideas.teamStatus, "shipped"),
     ];
+    filters.push(ideaCampusVisible(viewerCampus));
+    if (query.campus === "1") filters.push(eq(ideas.campusDomain, viewerCampus));
     if (query.branch) filters.push(eq(ideas.authorBranch, query.branch));
     if (query.semester) filters.push(eq(ideas.authorSemester, Number(query.semester)));
     if (query.q) filters.push(sql`${ideas.title} ILIKE ${"%" + query.q.replace(/[%_]/g, "") + "%"}`);
@@ -729,7 +755,7 @@ export async function listIdeas(userId: string, query: { branch?: string; semest
     }
     const last = page[page.length - 1];
     const forks = await forkCountsFor(page.map((row) => row.id));
-    const cards = page.map((row) => publicIdea(row, saved.has(row.id), row.problemId ? problemTitles.get(row.problemId) : null, forks.get(row.id) ?? 0));
+    const cards = page.map((row) => publicIdea(row, saved.has(row.id), row.problemId ? problemTitles.get(row.problemId) : null, forks.get(row.id) ?? 0, { viewerCampus }));
     return {
         ideas: await withIdeaImages(cards),
         nextCursor: rows.length > 20 && last ? encodeCursor(last.createdAt, last.id) : null,
@@ -740,6 +766,7 @@ export async function getIdea(userId: string, ideaId: string) {
     const viewer = await requireUser(userId);
     const idea = await mustIdea(ideaId);
     visibleOrThrow(idea.hiddenAt, viewer, idea.ownerId);
+    assertIdeaCampus(idea, viewer);
     let problemTitle: string | null = null;
     let problemSource: { id: string; title: string; reporterName: string | null } | null = null;
     if (idea.problemId) {
@@ -763,7 +790,7 @@ export async function getIdea(userId: string, ideaId: string) {
     const seatsOpen = idea.teamStatus === "open" && collaborators < MAX_COLLABORATORS;
     const images = await listIdeaImages(idea.id);
     const card = {
-        ...publicIdea(idea, saved.has(idea.id), problemTitle, forks.get(idea.id) ?? 0, { viewerIsMember: member }),
+        ...publicIdea(idea, saved.has(idea.id), problemTitle, forks.get(idea.id) ?? 0, { viewerIsMember: member, viewerCampus: campusOf(viewer) }),
         problemSource,
         approach,
         isMember: member,
@@ -906,6 +933,7 @@ export async function createIdea(userId: string, input: CreateSprintIdeaInput) {
         budgetMinor: paid && input.budget ? toMinor(input.budget) : null,
         licence: input.dealType === "open_source" ? input.licence ?? null : null,
         notAcademicAttestedAt: new Date(),
+        campusOnly: input.campusOnly,
     });
     await db.insert(approaches).values({
         ideaId: idea.id,
@@ -917,13 +945,15 @@ export async function createIdea(userId: string, input: CreateSprintIdeaInput) {
     return { idea: publicIdea(idea, false, null, 0, { viewerIsMember: true }) };
 }
 
-export async function listProblems(userId: string, query: { branch?: string; semester?: string; q?: string; cursor?: string; bucket?: string; noIdea?: string }) {
+export async function listProblems(userId: string, query: { branch?: string; semester?: string; q?: string; cursor?: string; bucket?: string; noIdea?: string; campus?: string }) {
     const viewer = await requireUser(userId);
+    const viewerCampus = campusOf(viewer);
     const sprint = await ensureSprint();
     const boundary = day7Of(sprint.endsAt);
     const now = new Date();
     const sunkSql = sql`${now} >= ${boundary} and not exists (select 1 from ideas i where i.problem_id = ${problems.id}) and ${problems.freshLine} is null`;
     const filters = [isNull(problems.hiddenAt), query.bucket === "sunk" ? sunkSql : sql`not (${sunkSql})`];
+    if (query.campus === "1") filters.push(eq(problems.campusDomain, viewerCampus));
     if (query.branch) filters.push(eq(problems.authorBranch, query.branch));
     if (query.semester) filters.push(eq(problems.authorSemester, Number(query.semester)));
     if (query.q) filters.push(sql`${problems.title} ILIKE ${"%" + query.q.replace(/[%_]/g, "") + "%"}`);
@@ -953,6 +983,7 @@ export async function listProblems(userId: string, query: { branch?: string; sem
             row.ideaId,
             query.bucket === "sunk",
             viewer.id,
+            viewerCampus,
         )),
         nextCursor: rows.length > 20 && last ? encodeCursor(last.problem.createdAt, last.problem.id) : null,
     };
@@ -974,7 +1005,7 @@ export async function getProblem(userId: string, problemId: string) {
         const [row] = await db.select().from(approaches).where(eq(approaches.problemId, problem.id));
         approach = row ? { body: row.body, contactEmail: row.contactEmail } : null;
     }
-    return { problem: { ...publicProblem(problem, saved.has(problem.id), linked?.id ?? null, sunk, viewer.id), approach } };
+    return { problem: { ...publicProblem(problem, saved.has(problem.id), linked?.id ?? null, sunk, viewer.id, campusOf(viewer)), approach } };
 }
 
 export async function createProblem(userId: string, input: CreateProblemInput) {
@@ -999,6 +1030,7 @@ export async function createProblem(userId: string, input: CreateProblemInput) {
         authorSemester: snap.authorSemester,
         hideName: input.hideName,
         notAcademicAttestedAt: new Date(),
+        campusDomain: campusOf(user),
     }).returning();
     await db.insert(approaches).values({
         problemId: problem.id,
@@ -1060,6 +1092,7 @@ export async function createOffer(userId: string, input: {
     if (input.ideaId) {
         const idea = await mustIdea(input.ideaId);
         if (idea.hiddenAt) throw new CampusError(404, "Idea not found");
+        assertIdeaCampus(idea, builder);
         if (idea.ownerId === builder.id) throw new CampusError(400, "You already author this idea");
         if (idea.teamStatus === "shipped") throw new CampusError(400, "This idea has shipped");
         if (idea.teamStatus !== "open") throw new CampusError(400, "This team is not open for new requests");
@@ -2073,6 +2106,7 @@ export async function forkIdea(userId: string, ideaId: string) {
     const user = await requireReady(userId);
     const source = await mustIdea(ideaId);
     visibleOrThrow(source.hiddenAt, user, source.ownerId);
+    assertIdeaCampus(source, user);
     const sprint = await ensureSprint();
     const visibility = source.visibility === "minimal" || source.visibility === "open" ? source.visibility : "standard";
     const showBrief = visibility === "standard" || visibility === "open";
@@ -2285,7 +2319,7 @@ export async function listSaved(userId: string, cursor?: string) {
         .select({ save: saves, idea: ideas })
         .from(saves)
         .innerJoin(ideas, eq(ideas.id, saves.targetId))
-        .where(and(...filters, isNull(ideas.hiddenAt), isNotNull(ideas.pitch)))
+        .where(and(...filters, isNull(ideas.hiddenAt), isNotNull(ideas.pitch), ideaCampusVisible(campusOf(viewer))))
         .orderBy(desc(saves.createdAt), desc(saves.id))
         .limit(21);
     const page = rows.slice(0, 20);

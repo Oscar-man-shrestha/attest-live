@@ -59,6 +59,8 @@ export type SprintIdea = {
   isMember?: boolean;
   engagement?: Engagement;
   teamMax?: number;
+  campusOnly?: boolean;
+  sameCampus?: boolean;
   dealType?: string;
   currency?: string | null;
   budgetMinor?: number | null;
@@ -184,6 +186,7 @@ export function getProfileIdeas(token: string, id: string, cursor?: string | nul
 }
 
 export type SprintProblem = {
+  sameCampus?: boolean;
   id: string;
   title: string;
   whatHappens: string;
@@ -257,8 +260,11 @@ export type FeedPage = {
   suggestedInterests: string[];
 };
 
-export function getForYouFeed(token: string, cursor?: string | null) {
-  const q = cursor ? `?${new URLSearchParams({ cursor })}` : "";
+export function getForYouFeed(token: string, cursor?: string | null, campusOnly = false) {
+  const params = new URLSearchParams();
+  if (cursor) params.set("cursor", cursor);
+  if (campusOnly) params.set("campus", "1");
+  const q = params.size ? `?${params}` : "";
   return request<FeedPage>(`/campus/feed${q}`, token);
 }
 
@@ -284,7 +290,7 @@ export function branchPopularity(token: string, branch: string) {
   );
 }
 
-export type PeopleScope = "all" | "branch" | "cohort";
+export type PeopleScope = "all" | "campus" | "branch" | "cohort";
 
 export type Person = {
   id: string;
@@ -751,6 +757,8 @@ export type Deal = {
   id: string;
   role: "requester" | "builder" | "admin";
   idea: { id: string; title: string } | null;
+  gig?: { id: string; title: string } | null;
+  title?: string;
   requester: DealParty;
   builder: DealParty;
   dealType: string;
@@ -776,6 +784,7 @@ export type DealSummary = {
   id: string;
   role: "requester" | "builder";
   ideaTitle: string;
+  isGig?: boolean;
   otherHandle: string | null;
   dealType: string;
   total: string | null;
@@ -878,4 +887,63 @@ export function suspendPerson(token: string, id: string, reason: string) {
 }
 export function unsuspendPerson(token: string, id: string) {
   return request<{ ok: true }>(`/campus/admin/users/${id}/unsuspend`, token, post());
+}
+
+// ---------- GIGS (quick freelancing) ----------
+export type Gig = {
+  id: string;
+  kind: "request" | "offer";
+  title: string;
+  description: string;
+  category: string;
+  dealType: string;
+  paid: boolean;
+  currency: string | null;
+  priceMinor: number | null;
+  price: string | null;
+  deliveryDays: number | null;
+  campusOnly: boolean;
+  sameCampus: boolean;
+  status: "open" | "closed";
+  hidden: boolean;
+  createdAt: string;
+  author: { id: string; handle: string };
+  mine: boolean;
+  responseCount?: number;
+};
+export type GigResponse = {
+  id: string;
+  note: string;
+  status: "new" | "hired" | "declined";
+  engagementId: string | null;
+  createdAt: string;
+  user?: { id: string; handle: string; isAdult: boolean; sameCampus: boolean };
+};
+export type GigDetail = { gig: Gig; responses: GigResponse[]; myResponse: GigResponse | null };
+
+export function listGigs(token: string, params: { kind: "request" | "offer"; campus?: boolean; category?: string; mine?: boolean; cursor?: string | null }) {
+  const q = new URLSearchParams({ kind: params.kind });
+  if (params.campus) q.set("campus", "1");
+  if (params.category) q.set("category", params.category);
+  if (params.mine) q.set("mine", "1");
+  if (params.cursor) q.set("cursor", params.cursor);
+  return request<{ gigs: Gig[]; nextCursor: string | null }>(`/campus/gigs?${q}`, token);
+}
+export function createGig(token: string, body: unknown) {
+  return request<{ gig: Gig }>("/campus/gigs", token, { method: "POST", body: JSON.stringify(body) });
+}
+export function getGig(token: string, id: string) {
+  return request<GigDetail>(`/campus/gigs/${id}`, token);
+}
+export function respondToGig(token: string, id: string, note: string) {
+  return request<{ response: GigResponse }>(`/campus/gigs/${id}/respond`, token, { method: "POST", body: JSON.stringify({ note }) });
+}
+export function closeGig(token: string, id: string) {
+  return request<{ ok: true }>(`/campus/gigs/${id}/close`, token, { method: "POST", body: "{}" });
+}
+export function acceptGigResponse(token: string, responseId: string) {
+  return request<{ engagementId: string }>(`/campus/gig-responses/${responseId}/accept`, token, { method: "POST", body: "{}" });
+}
+export function declineGigResponse(token: string, responseId: string) {
+  return request<{ ok: true }>(`/campus/gig-responses/${responseId}/decline`, token, { method: "POST", body: "{}" });
 }

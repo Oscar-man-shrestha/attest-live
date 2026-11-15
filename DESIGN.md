@@ -4,12 +4,13 @@ Design for a tired engineering student between labs: clear, fast, trustworthy. S
 
 ## Brand & layout
 - Product name **Attest** is visible in shell (sidebar + navbar). Landing makes Attest the hero, then equal Ideas / Problems columns.
-- Palette: Ideas indigo `#4f46e5`, Problems amber `#b45309`, ink `#141b2b`, muted `#777587`, wash `#f9f9ff` / `#f1f3ff` / Problems wash `#fffbf5`. Stay here — no purple-glow AI aesthetic, no newspaper theme.
+- Palette: Ideas indigo `#4f46e5`, Problems amber `#b45309`, money (Gigs, Deals) emerald `#047857`, ink `#141b2b`, muted `#777587`, page `#fbfbfe`, Problems wash `#fffbf5`. No purple-glow AI aesthetic.
+- **Identity (2026-11-15): lab notebook + proof stamps.** See "Identity kit" below.
 - Serif for page titles (`font-serif`), sans for UI. Material Symbols for nav icons.
 - App shell: left workspace nav + top search chrome. Ideas board max-width ~5xl (wider Medium-style cards); other boards ~3xl–4xl.
 
 ## Principles (user POV)
-1. **One job per screen.** Ideas = discover builds. Problems = name pains. People = find classmates. Offer = decide. Workspace = ship.
+1. **One job per screen.** Ideas = discover builds. Problems = name pains. Gigs = quick one-milestone work. People = find classmates. Offer = decide. Workspace = ship. Deals = milestones and payment records.
 2. **Show why.** Idea cards show reason lines (“Needs your Arduino”, “Popular in your circle”). People cards show match reasons. Never dump a silent score alone.
 3. **Proof over polish.** Signed skills, GitHub stats, shipped count beat long bios.
 4. **Borrow, don’t clone.**
@@ -51,8 +52,20 @@ What happens (2–3 lines)
 ## Profile anatomy
 Cover + avatar → name/headline/university verified → follow counts + activity streak → Currently working on → About → Signed contributions → Experience / Projects / Certs → GitHub tile → posts. Invite-to-idea stays; **no DMs**.
 
+## Identity kit (2026-11-15)
+The product is about proof, so the look borrows from things that record proof: a lab notebook, an ink stamp, a receipt.
+- **Graph paper** (`.paper-grid`): the app shell, landing and login sit on a faint 24px grid.
+- **Seal logo** (`components/brand/AttestSeal.tsx`): a notary seal with a tick. Replaces the old hub icon.
+- **Stamps** (`components/brand/Stamp.tsx`, `.stamp`): rotated ink-stamp badges. Use them **only for things someone else verified**: a teammate's signature, a payment both sides confirmed, an accepted response, a verified university email. Never for self-claims, counts or decoration.
+- **Tickets** (`.ticket` + `.ticket-tear`): tear-off receipt cards for anything with money: gigs, deals, milestones. Stub above the tear, amount below.
+- **Ledger numbers** (`.ledger`, `.serial`): monospace for money, counts and small eyebrow labels.
+- **Highlighter** (`.hl-indigo`, `.hl-amber`, `.hl-green`): one or two words in a page title, never body text.
+- **Campus** (`CampusSwitch`, `CampusChips`): "My campus / Everywhere" segmented switch; "Same campus" and "Campus only" chips.
+- **Primary buttons** on landing and Gigs use a hard offset shadow that presses in on hover.
+- The landing receipt is an illustration and must stay labelled "Example". No invented live numbers anywhere.
+
 ## Motion
-Keep it quiet: hover washes, pressed states on like, soft list transitions. No confetti.
+Keep it quiet: hover washes, a small card lift, pressed states on like. One exception: a stamp may "thunk" in once (`.stamp-thunk`) when something becomes verified. Respect `prefers-reduced-motion`. No confetti.
 
 ## Accessibility
 - Buttons have names (like/comment already aria-friendly in PostActions)

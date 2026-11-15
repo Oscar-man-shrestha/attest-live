@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { BRANCHES } from "@embedra/types";
 import { listSprintProblems, saveCard, type SprintProblem } from "@/lib/campus-api";
+import CampusSwitch, { useCampusScope } from "@/components/campus/CampusSwitch";
 import EmptyState from "@/components/campus/EmptyState";
 
 export default function ProblemsPage() {
@@ -13,6 +14,7 @@ export default function ProblemsPage() {
   const [sunk, setSunk] = useState<SprintProblem[]>([]);
   const [branch, setBranch] = useState("");
   const [noIdea, setNoIdea] = useState(false);
+  const [scope, setScope] = useCampusScope();
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,9 +22,10 @@ export default function ProblemsPage() {
     const params: Record<string, string> = {};
     if (branch) params.branch = branch;
     if (noIdea) params.noIdea = "1";
+    if (scope === "campus") params.campus = "1";
     listSprintProblems(token, params).then((data) => setRows(data.problems)).catch((err) => setError(err.message));
     listSprintProblems(token, { ...params, bucket: "sunk" }).then((data) => setSunk(data.problems)).catch(() => {});
-  }, [token, branch, noIdea]);
+  }, [token, branch, noIdea, scope]);
 
   if (!isLoading && !user) return null;
 
@@ -38,6 +41,7 @@ export default function ProblemsPage() {
         <div className="min-w-0 flex-1">
           <p className="text-[11px] uppercase tracking-wider text-[#b45309] font-semibold">
             {badge(problem)}
+            {problem.sameCampus && <span className="ml-2 normal-case tracking-normal text-[#3730a3]">· Same campus</span>}
           </p>
           <p className="text-[11px] uppercase tracking-wider text-[#777587] mt-0.5">
             {problem.source} · {problem.authorBranch} · Sem {problem.authorSemester}
@@ -102,7 +106,8 @@ export default function ProblemsPage() {
           Report a problem
         </Link>
       </div>
-      <div className="flex gap-2 items-center">
+      <div className="flex flex-wrap gap-2 items-center">
+        <CampusSwitch value={scope} onChange={setScope} />
         <select value={branch} onChange={(e) => setBranch(e.target.value)} className="rounded-lg border border-[#c7c4d8] px-3 py-2 text-[13px]">
           <option value="">All branches</option>
           {BRANCHES.map((code) => <option key={code}>{code}</option>)}

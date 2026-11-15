@@ -76,6 +76,15 @@ router.post("/milestones/:id/payment", deals.recordPayment);
 router.post("/milestones/:id/payment/confirm", deals.confirmPayment);
 router.get("/people/:id/record", deals.personReviews);
 
+// Gigs board
+router.get("/gigs", deals.listGigs);
+router.post("/gigs", deals.createGig);
+router.get("/gigs/:id", deals.getGig);
+router.post("/gigs/:id/respond", deals.respondToGig);
+router.post("/gigs/:id/close", deals.closeGig);
+router.post("/gig-responses/:id/accept", deals.acceptGigResponse);
+router.post("/gig-responses/:id/decline", deals.declineGigResponse);
+
 // Account settings
 router.put("/me/handle", deals.setHandle);
 router.post("/me/adult", deals.confirmAdult);

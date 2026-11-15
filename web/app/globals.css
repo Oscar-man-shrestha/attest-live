@@ -331,3 +331,110 @@
 @media (prefers-reduced-motion: reduce) {
   .animate-rise { animation: none; }
 }
+
+/* ─── Attest identity: lab notebook + proof stamps (DESIGN.md, 2026-11-15) ─── */
+:root {
+  --page: #fbfbfe;
+  --grid-line: rgba(79, 70, 229, 0.06);
+  --money: #047857;
+}
+
+/* Graph-paper wash, like an engineering lab notebook. */
+.paper-grid {
+  background-color: var(--page);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Ink stamp: used only for states someone else verified (signed, paid by both, verified email). */
+.stamp {
+  --stamp: #047857;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--stamp);
+  padding: 0.5em 0.75em;
+  border: 1.5px solid currentColor;
+  border-radius: 5px;
+  outline: 1px solid currentColor;
+  outline-offset: 2px;
+  background: color-mix(in srgb, var(--stamp) 7%, transparent);
+  transform: rotate(-3deg);
+  opacity: 0.92;
+}
+.stamp-flat { transform: none; }
+.stamp-lg { font-size: 13px; padding: 0.6em 0.9em; border-width: 2px; }
+.stamp-ink { --stamp: #3730a3; }
+.stamp-amber { --stamp: #b45309; }
+.stamp-red { --stamp: #b91c1c; }
+.stamp-muted { --stamp: #6b7280; }
+
+@keyframes stamp-thunk {
+  0% { transform: scale(2.1) rotate(-14deg); opacity: 0; }
+  60% { transform: scale(0.94) rotate(-3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(-3deg); opacity: 0.92; }
+}
+.stamp-thunk { animation: stamp-thunk 0.42s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+
+/* Ticket / receipt card for anything involving money. Put .ticket-tear between the stub and the body. */
+.ticket {
+  position: relative;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid #e4e2ee;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(20, 27, 43, 0.04);
+}
+.ticket-tear {
+  position: relative;
+  border-top: 1.5px dashed #d5d2e3;
+}
+.ticket-tear::before,
+.ticket-tear::after {
+  content: "";
+  position: absolute;
+  top: -10px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--page);
+  border: 1px solid #e4e2ee;
+}
+.ticket-tear::before { left: -10px; }
+.ticket-tear::after { right: -10px; }
+
+/* Monospace numbers for money, counts and serials. */
+.ledger {
+  font-family: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+.serial {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8b8a9b;
+}
+
+/* Highlighter stroke under key words. */
+.hl-indigo { background: linear-gradient(transparent 62%, rgba(79, 70, 229, 0.22) 62%); }
+.hl-amber { background: linear-gradient(transparent 62%, rgba(245, 158, 11, 0.32) 62%); }
+.hl-green { background: linear-gradient(transparent 62%, rgba(16, 185, 129, 0.28) 62%); }
+
+.card-lift { transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease; }
+.card-lift:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(20, 27, 43, 0.08); }
+
+@media (prefers-reduced-motion: reduce) {
+  .stamp-thunk { animation: none; }
+  .card-lift, .card-lift:hover { transition: none; transform: none; }
+}

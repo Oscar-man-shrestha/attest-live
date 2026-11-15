@@ -22,6 +22,7 @@ import {
   type DealMessage,
   type DealMilestone,
 } from "@/lib/campus-api";
+import Stamp from "@/components/brand/Stamp";
 
 const STATUS_LABEL: Record<DealMilestone["status"], string> = {
   open: "Not started",
@@ -83,7 +84,7 @@ export default function DealPage() {
         <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-[#047857]">
           {DEAL_TYPE_LABELS[deal.dealType as DealType] ?? deal.dealType} · {deal.status}
         </p>
-        <h1 className="font-serif text-[30px] font-semibold tracking-tight">{deal.idea?.title ?? "Deal"}</h1>
+        <h1 className="font-serif text-[30px] font-semibold tracking-tight">{deal.title ?? deal.idea?.title ?? "Deal"}</h1>
         <p className="text-[14px] text-[#464555] mt-1">
           {isRequester ? "Builder" : "Requester"}: <Link href={`/profile/${other?.id}`} className="font-semibold text-[#141b2b] hover:underline">@{other?.handle}</Link>
           {deal.total ? <> · Total <span className="font-semibold">{deal.total}</span></> : null}
@@ -116,7 +117,10 @@ export default function DealPage() {
         <p className="rounded-xl border border-[#e7e5e4] bg-[#fafaf9] p-3 text-[13px] text-[#57534e]">Cancelled{deal.cancelReason ? `: “${deal.cancelReason}”` : ""}. Accepted milestones stay on both records.</p>
       )}
       {deal.status === "completed" && (
-        <p className="rounded-xl border border-[#c7d2fe] bg-[#eef0ff] p-3 text-[13px] text-[#3730a3]">Complete. Every milestone is done{deal.paid ? " and both of you confirmed each payment" : ""}, and it shows as proof on both profiles.</p>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#c7d2fe] bg-[#eef0ff] p-4">
+          <p className="text-[13px] text-[#3730a3] max-w-md">Complete. Every milestone is done{deal.paid ? " and both of you confirmed each payment" : ""}, and it shows as proof on both profiles.</p>
+          <Stamp large thunk tone={deal.paid ? "money" : "ink"} icon="verified">{deal.paid ? "Paid · both confirmed" : "Accepted · complete"}</Stamp>
+        </div>
       )}
 
       <section className="space-y-3" aria-labelledby="milestones-heading">
@@ -167,18 +171,20 @@ function MilestoneCard({ m, deal, busy, act, token }: {
   const key = (k: string) => `${k}:${m.id}`;
 
   return (
-    <div className={`rounded-2xl border p-4 space-y-2 ${done ? "border-[#bbf7d0] bg-[#f0fdf4]" : "border-[#e4e2ee] bg-white"}`}>
+    <div className={`ticket p-4 space-y-2 ${done ? "!border-[#bbf7d0] !bg-[#f7fdf9]" : ""}`}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="font-semibold text-[15px] text-[#141b2b]">{m.position}. {m.title}</p>
           <p className="text-[12px] text-[#777587]">
             {STATUS_LABEL[m.status]}
-            {m.amount ? ` · ${m.amount}` : ""}
             {m.dueAt ? ` · due ${date(m.dueAt)}` : ""}
             {m.status === "submitted" && m.acceptanceDeadline ? ` · auto-accepts ${date(m.acceptanceDeadline)}` : ""}
           </p>
         </div>
-        {done && <span className="material-symbols-outlined text-[#15803d]" aria-label="Done">verified</span>}
+        <div className="flex flex-col items-end gap-2 shrink-0">
+          {m.amount && <span className="ledger text-[16px] font-bold text-[#141b2b]">{m.amount}</span>}
+          {done && <Stamp flat icon="verified">{m.status === "payment_confirmed" ? "Paid ✓✓" : "Accepted"}</Stamp>}
+        </div>
       </div>
 
       {m.deliverableLinks.length > 0 && (

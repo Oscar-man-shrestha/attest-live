@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import DealRecord from "@/components/campus/DealRecord";
+import Stamp from "@/components/brand/Stamp";
 import {
   getCampusProfile,
   getProfileIdeas,
@@ -213,7 +214,7 @@ export default function CampusProfilePage() {
             {profile.handle && <p className="text-[13px] text-[#777587]">@{profile.handle}</p>}
             {(profile.university || profile.verifiedStudent) && (
               <p className="text-[13px] text-[#464555]">
-                {profile.university || "Verified student"} <span className="text-[11px] font-semibold text-[#15803d]">✓ verified university email</span>
+                {profile.university || "Verified student"} <Stamp flat tone="ink" icon="school" className="ml-1 align-middle">Verified email</Stamp>
               </p>
             )}
             {(profile.city || profile.country) && <p className="text-[13px] text-[#464555]">{[profile.city, profile.country].filter(Boolean).join(", ")}</p>}

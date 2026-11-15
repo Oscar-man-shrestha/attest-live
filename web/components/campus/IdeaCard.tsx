@@ -6,6 +6,7 @@ import type { FeedIdea, SprintIdea } from "@/lib/campus-api";
 import PostActions from "./PostActions";
 import { Avatar, timeAgo } from "./CommentThread";
 import DealBadge from "./DealBadge";
+import CampusChips from "./CampusChips";
 
 export type IdeaCardIdea = SprintIdea & Partial<Pick<FeedIdea, "reasons" | "topics">>;
 
@@ -93,7 +94,10 @@ export default function IdeaCard({ idea, token, viewerId, feedCard = false, onNo
               </>
             )}
           </p>
-          <DealBadge dealType={idea.dealType} currency={idea.currency} budgetMinor={idea.budgetMinor} licence={idea.licence} />
+          <div className="flex flex-wrap items-center gap-1.5">
+            <DealBadge dealType={idea.dealType} currency={idea.currency} budgetMinor={idea.budgetMinor} licence={idea.licence} />
+            <CampusChips sameCampus={idea.sameCampus} campusOnly={idea.campusOnly} />
+          </div>
 
           <Link
             href={`/ideas/${idea.id}`}

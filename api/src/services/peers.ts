@@ -262,7 +262,7 @@ export async function circleMates(userId: string) {
 
 // ---------- students like you ----------
 
-export type PeopleScope = "all" | "branch" | "cohort";
+export type PeopleScope = "all" | "campus" | "branch" | "cohort";
 
 function decodeCursor(cursor?: string) {
     if (!cursor) return 0;
@@ -298,7 +298,9 @@ async function coEngagement(viewerId: string) {
 export async function studentsLikeYou(userId: string, scope: PeopleScope, cursor?: string) {
     const viewer = await requireUser(userId);
     const conditions = [ne(users.id, viewer.id), isNotNull(users.branch), isNotNull(users.displayName)];
-    if (scope !== "all" && viewer.branch) conditions.push(eq(users.branch, viewer.branch));
+    const viewerCampus = viewer.emailDomain ?? viewer.email.split("@")[1] ?? "";
+    if (scope === "campus") conditions.push(eq(users.emailDomain, viewerCampus));
+    if ((scope === "branch" || scope === "cohort") && viewer.branch) conditions.push(eq(users.branch, viewer.branch));
     if (scope === "cohort" && viewer.semester) conditions.push(eq(users.semester, viewer.semester));
 
     const [candidates, engaged, state, myIdeas] = await Promise.all([

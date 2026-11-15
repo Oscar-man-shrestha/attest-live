@@ -15,8 +15,9 @@ interface MobileNavItem {
 
 const ITEMS: MobileNavItem[] = [
   { id: "ideas", label: "Ideas", icon: "lightbulb", href: "/ideas" },
-  { id: "people", label: "People", icon: "group", href: "/people" },
+  { id: "gigs", label: "Gigs", icon: "bolt", href: "/gigs" },
   { id: "problems", label: "Problems", icon: "flag", href: "/problems" },
+  { id: "people", label: "People", icon: "group", href: "/people" },
   { id: "inbox", label: "Inbox", icon: "inbox", href: "/inbox" },
   { id: "deals", label: "Deals", icon: "handshake", href: "/deals" },
 ];

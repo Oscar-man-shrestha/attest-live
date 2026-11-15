@@ -46,6 +46,7 @@ const empty = {
   budget: "",
   licence: "MIT",
   notAcademicWork: false,
+  campusOnly: false,
 };
 
 const MIN: Partial<Record<keyof typeof empty, number>> = {
@@ -210,6 +211,7 @@ export default function NewSprintIdeaPage() {
         budget: paid ? Number(form.budget) : null,
         licence: form.dealType === "open_source" ? form.licence : null,
         notAcademicWork: true,
+        campusOnly: form.campusOnly,
       });
       for (const file of pendingImages.slice(0, 3)) {
         const resized = await resizeImage(file);
@@ -314,6 +316,13 @@ export default function NewSprintIdeaPage() {
           </label>
           {form.isSmall && field("hourCap", "Hour cap")}
           {field("compensationSentence", "Compensation, one sentence. Leave blank for volunteer.")}
+          <label className="flex items-start gap-2 text-[13px]">
+            <input type="checkbox" checked={form.campusOnly} onChange={(e) => set("campusOnly", e.target.checked)} className="mt-1" />
+            <span>
+              Only my campus can see this.
+              <span className="block text-[12px] text-[#777587]">Good for hardware builds and anything you&apos;d rather do in person. Other universities won&apos;t see it anywhere.</span>
+            </span>
+          </label>
           <label className="flex items-center gap-2 text-[13px]">
             <input type="checkbox" checked={form.hideName} onChange={(e) => set("hideName", e.target.checked)} />
             Hide my name. Branch and semester still show.

@@ -51,6 +51,7 @@ export const users = pgTable("users", {
     suspendedReason: text("suspended_reason"),
     suspensionAppeal: text("suspension_appeal"),
     appealedAt: timestamp("appealed_at"),
+    emailDomain: text("email_domain"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -149,6 +150,8 @@ export const ideas = pgTable("ideas", {
     licence: text("licence"),
     notAcademicAttestedAt: timestamp("not_academic_attested_at"),
     integrityCheckedAt: timestamp("integrity_checked_at"),
+    campusDomain: text("campus_domain"),
+    campusOnly: boolean("campus_only").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -268,6 +271,7 @@ export const problems = pgTable("problems", {
     hiddenAt: timestamp("hidden_at"),
     notAcademicAttestedAt: timestamp("not_academic_attested_at"),
     integrityCheckedAt: timestamp("integrity_checked_at"),
+    campusDomain: text("campus_domain"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -425,10 +429,33 @@ export const documents = pgTable("documents", {
     byStatus: index("documents_status_created_idx").on(t.status, t.createdAt),
 }));
 
+// ---------- GIGS (quick freelancing; see DATA.md) ----------
+export const gigs = pgTable("gigs", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    authorId: uuid("author_id").notNull().references(() => users.id),
+    kind: text("kind").notNull(),
+    title: text("title").notNull(),
+    description: text("description").notNull(),
+    category: text("category").notNull(),
+    dealType: text("deal_type").notNull(),
+    currency: text("currency"),
+    priceMinor: integer("price_minor"),
+    deliveryDays: integer("delivery_days"),
+    campusDomain: text("campus_domain"),
+    campusOnly: boolean("campus_only").default(false).notNull(),
+    status: text("status").default("open").notNull(),
+    notAcademicAttestedAt: timestamp("not_academic_attested_at").notNull(),
+    hiddenAt: timestamp("hidden_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+    byBoard: index("gigs_board_idx").on(t.status, t.kind, t.createdAt),
+}));
+
 // ---------- MARKETPLACE PHASE 1 (no money held; see DATA.md) ----------
 export const engagements = pgTable("engagements", {
     id: uuid("id").defaultRandom().primaryKey(),
-    ideaId: uuid("idea_id").notNull().references(() => ideas.id),
+    ideaId: uuid("idea_id").references(() => ideas.id),
+    gigId: uuid("gig_id").references(() => gigs.id),
     requesterId: uuid("requester_id").notNull().references(() => users.id),
     builderId: uuid("builder_id").notNull().references(() => users.id),
     dealType: text("deal_type").notNull(),
@@ -447,6 +474,18 @@ export const engagements = pgTable("engagements", {
 }, (t) => ({
     byBuilder: index("engagements_builder_status_idx").on(t.builderId, t.status),
     byRequester: index("engagements_requester_status_idx").on(t.requesterId, t.status),
+}));
+
+export const gigResponses = pgTable("gig_responses", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    gigId: uuid("gig_id").notNull().references(() => gigs.id),
+    userId: uuid("user_id").notNull().references(() => users.id),
+    note: text("note").notNull(),
+    status: text("status").default("new").notNull(),
+    engagementId: uuid("engagement_id").references(() => engagements.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+    uniqGigUser: unique("gig_responses_gig_user_unique").on(t.gigId, t.userId),
 }));
 
 export const milestones = pgTable("milestones", {

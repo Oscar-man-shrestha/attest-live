@@ -10,6 +10,7 @@ import EmptyState from "@/components/campus/EmptyState";
 
 const SCOPES: { value: PeopleScope; label: string }[] = [
   { value: "all", label: "Everyone" },
+  { value: "campus", label: "My campus" },
   { value: "branch", label: "My branch" },
   { value: "cohort", label: "My branch & semester" },
 ];

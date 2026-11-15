@@ -8,7 +8,7 @@ Agents and humans: break these only with an explicit user decision recorded in M
 3. Platform-level suspension is admin-only, needs a written reason, and always allows an appeal. Community bans (if ever) stay one-community scoped.
 4. Owner cannot rate their own idea (legacy ratings). Skills are signed only via receipts.
 5. Contribution / receipt defaults stay pending until owner signs.
-6. University from verified email is not editable, and is hidden from other users unless the user turns on `show_institution`.
+6. University from verified email is not editable, and is hidden from other users unless the user turns on `show_institution`. Exception: people verified on the same email domain can see a "Same campus" badge on each other's posts.
 7. CGPA is never on the public profile; only self + idea owner on offers.
 8. Resume and idea-brief files are parsed then deleted. Do not store binaries long-term.
 9. Likes are social; signatures are proof. Do not treat likes as verified skill.
@@ -21,6 +21,7 @@ Agents and humans: break these only with an explicit user decision recorded in M
 14. A paid milestone counts as proof only when both payer and payee confirm the payment.
 15. Paid deal types (`paid_fixed`, `sponsor_stipend`) need both parties to have confirmed they are 18 or older. Under-18s may join unpaid deals only.
 16. Builders pay 0% to Attest. Never add a fee on the student side.
+17a. Campus-only posts (`campus_only`) are never shown to another email domain, in any list or detail endpoint.
 17. No graded coursework, exams or assignments for either party. Every post and engagement carries the not-graded-work attestation. Capstones only as disclosed collaboration. Flags go to human review; never auto-ban.
 18. Never store bank account, card or UPI numbers. Payment references are free-text receipts IDs only.
 19. Reviews stay hidden until both sides submit or 14 days pass, and are shown as distributions, not averages.

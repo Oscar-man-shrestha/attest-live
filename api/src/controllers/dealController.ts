@@ -6,7 +6,10 @@ import {
     cancelEngagementSchema,
     confirmAdultSchema,
     createEngagementSchema,
+    createGigSchema,
     cursorQuerySchema,
+    gigListQuerySchema,
+    gigResponseSchema,
     disputeMilestoneSchema,
     engagementMessageSchema,
     privacySchema,
@@ -19,6 +22,7 @@ import {
 } from "../../../packages/types";
 import { CampusError } from "../services/campusService";
 import * as deals from "../services/dealService";
+import * as gigs from "../services/gigService";
 
 const idSchema = z.string().uuid();
 
@@ -73,6 +77,15 @@ export const cancelEngagement = handle(cancelEngagementSchema, "body", (userId, 
 export const reviewEngagement = handle(reviewSchema, "body", (userId, id, input) => deals.submitReview(userId, id, input));
 export const listMessages = handle(cursorQuerySchema, "query", (userId, id, input) => deals.listMessages(userId, id, input));
 export const postMessage = handle(engagementMessageSchema, "body", (userId, id, input) => deals.postMessage(userId, id, input.body));
+
+// Gigs (quick freelancing)
+export const listGigs = handle(gigListQuerySchema, "query", (userId, _id, input) => gigs.listGigs(userId, input));
+export const createGig = handle(createGigSchema, "body", (userId, _id, input) => gigs.createGig(userId, input));
+export const getGig = handle(null, "body", (userId, id) => gigs.getGig(userId, id));
+export const respondToGig = handle(gigResponseSchema, "body", (userId, id, input) => gigs.respondToGig(userId, id, input.note));
+export const closeGig = handle(null, "body", (userId, id) => gigs.closeGig(userId, id));
+export const acceptGigResponse = handle(null, "body", (userId, id) => gigs.acceptResponse(userId, id));
+export const declineGigResponse = handle(null, "body", (userId, id) => gigs.declineResponse(userId, id));
 
 // Milestones
 export const submitMilestone = handle(submitMilestoneSchema, "body", (userId, id, input) => deals.submitMilestone(userId, id, input));
