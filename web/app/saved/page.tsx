@@ -44,7 +44,7 @@ export default function SavedPage() {
   const total = ideas.length + problems.length;
 
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-5xl mx-auto space-y-5">
+    <div className="px-5 sm:px-8 py-6 max-w-5xl 2xl:max-w-7xl mx-auto space-y-5">
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-wider text-[#4f46e5]">Bookmarks</p>
         <div className="flex items-baseline gap-2.5">

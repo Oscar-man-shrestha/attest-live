@@ -44,7 +44,7 @@ export default function ViewIdeaPage() {
 
   if (status === "loading" || authLoading) {
     return (
-      <main className="max-w-3xl mx-auto px-5 py-10">
+      <main className="max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto px-5 py-10">
         <p className="text-[14px] text-[#777587]">Loading idea…</p>
       </main>
     );

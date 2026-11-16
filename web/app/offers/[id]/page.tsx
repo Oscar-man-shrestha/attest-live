@@ -30,7 +30,7 @@ export default function OfferPage() {
           : "bg-[#eef2ff] text-[#3730a3]";
 
   return (
-    <div className="px-5 py-6 max-w-5xl mx-auto space-y-4">
+    <div className="px-5 py-6 max-w-5xl 2xl:max-w-7xl mx-auto space-y-4">
       <Link href="/inbox" className="text-[12px] font-medium text-[#777587] hover:text-[#4f46e5]">← Inbox</Link>
       <div className="flex items-end justify-between gap-3">
         <div>

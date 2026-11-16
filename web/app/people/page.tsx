@@ -58,7 +58,7 @@ export default function PeoplePage() {
   };
 
   return (
-    <div className="px-5 py-6 max-w-3xl mx-auto space-y-4">
+    <div className="px-5 py-6 max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto space-y-4">
       <div>
         <p className="text-[11px] font-semibold uppercase tracking-wider text-[#4f46e5]">Students like you</p>
         <h1 className="font-serif text-[32px] font-semibold">People</h1>

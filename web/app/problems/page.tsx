@@ -95,7 +95,7 @@ export default function ProblemsPage() {
   );
 
   return (
-    <div className="px-5 py-6 max-w-3xl mx-auto space-y-4">
+    <div className="px-5 py-6 max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto space-y-4">
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wider text-[#b45309]">Campus pains</p>

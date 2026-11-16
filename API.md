@@ -323,3 +323,13 @@ Organiser need lists. All under `/api/v1/campus`, JWT required.
 | GET | `/kits/:id` | — | Kit, its needs with a `stage` (open, hired, review, delivered, paid) and totals. Builder, deal link and money totals are owner-only |
 | POST | `/kits/:id/needs` | `kitNeedSchema` | Owner only. Creates a request gig linked to the kit; max 20 per kit; paid needs require the owner 18+ |
 | POST | `/kits/:id/close` | — | Owner only. Unfilled needs close with it |
+
+## Open sign-in, tips and trust record (added 2026-11-15)
+
+- `POST /auth/campus/request-code`, `/verify` and the Google callback accept **any** verified email. University emails additionally set `users.email_domain` and record an academic verification.
+- `GET /auth/me` user now carries `hasCampus`, `verifiedStudent`, `tipUrl`.
+
+| Method | Path | Zod in | Notes |
+|---|---|---|---|
+| PUT | `/campus/me/tip` | `tipUrlSchema` | Set or clear (`""`) the profile tip link. https only, allowlisted tipping hosts |
+| GET | `/campus/people/:id/record` | — | Now also returns `handle`, `tipUrl`, `memberSince`, `verifiedStudent`, `trust` (people helped, work accepted, tasks signed, deals completed, deals dropped) and `history` (up to 40 dated events, newest first) |

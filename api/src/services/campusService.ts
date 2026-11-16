@@ -45,6 +45,7 @@ import {
     emailDomain,
     guessFromRollNumber,
     INTEREST_TILES,
+    isAcademicDomain,
     isAcademicEmail,
     isPaidDeal,
     toMinor,
@@ -143,6 +144,9 @@ export function toPublicUser(user: UserRow) {
         city: user.city,
         showInstitution: user.showInstitution,
         isAdult: Boolean(user.adultConfirmedAt),
+        hasCampus: hasCampus(user),
+        verifiedStudent: hasCampus(user),
+        tipUrl: user.tipUrl,
         suspended: Boolean(user.suspendedAt),
         suspendedReason: user.suspendedAt ? user.suspendedReason : null,
         appealed: Boolean(user.appealedAt),
@@ -150,8 +154,21 @@ export function toPublicUser(user: UserRow) {
 }
 
 /** Campus = same verified email domain. */
-export function campusOf(user: Pick<UserRow, "email" | "emailDomain">) {
-    return user.emailDomain ?? emailDomain(user.email);
+/**
+ * A person's campus: their university email domain. People who signed in with a personal address have
+ * no campus; they get a private sentinel (`~<id>`) that never equals anyone else's, so no campus filter
+ * ever groups them (for example, everyone on gmail.com).
+ */
+export function campusOf(user: Pick<UserRow, "id" | "email" | "emailDomain">) {
+    const domain = user.emailDomain ?? emailDomain(user.email);
+    return isAcademicDomain(domain) ? domain : `~${user.id}`;
+}
+export function hasCampus(user: Pick<UserRow, "id" | "email" | "emailDomain">) {
+    return !campusOf(user).startsWith("~");
+}
+/** Value to store on a post: the university domain, or null when the poster has no campus. */
+export function campusDomainOrNull(user: Pick<UserRow, "id" | "email" | "emailDomain">) {
+    return hasCampus(user) ? campusOf(user) : null;
 }
 
 /** SQL guard: campus-only ideas are visible only to their own campus (RULES 17a). */
@@ -549,8 +566,8 @@ async function insertIdeaRecord(owner: UserRow, fields: {
         budgetMinor: fields.budgetMinor ?? null,
         licence: fields.licence ?? null,
         notAcademicAttestedAt: fields.notAcademicAttestedAt ?? null,
-        campusDomain: campusOf(owner),
-        campusOnly: Boolean(fields.campusOnly),
+        campusDomain: campusDomainOrNull(owner),
+        campusOnly: Boolean(fields.campusOnly) && hasCampus(owner),
     }).returning();
     const [group] = await db.insert(groups).values({ ideaId: idea.id }).returning();
     await db.insert(groupMembers).values({ groupId: group.id, userId: owner.id });
@@ -647,9 +664,8 @@ async function recordVerification(userId: string, email: string, method: "otp" |
 
 export async function signInCampusEmail(email: string, fullName?: string | null, method: "otp" | "microsoft" | "google" = "otp") {
     const normalized = email.trim().toLowerCase();
-    if (!isAcademicEmail(normalized)) {
-        throw new CampusError(403, "Use your university email to sign in (for example .edu, .ac.in or .edu.np)");
-    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) throw new CampusError(400, "Enter a valid email");
+    const academic = isAcademicEmail(normalized);
     const university = universityForEmail(normalized);
     const guess = guessFromRollNumber(normalized);
     const cleanName = fullName?.trim().replace(/\s+/g, " ").slice(0, 80) || null;
@@ -658,7 +674,7 @@ export async function signInCampusEmail(email: string, fullName?: string | null,
     if (user) {
         const fill: Partial<typeof users.$inferInsert> = {};
         if (!user.university && university) fill.university = university;
-        if (!user.emailDomain) fill.emailDomain = emailDomain(normalized);
+        if (!user.emailDomain && academic) fill.emailDomain = emailDomain(normalized);
         if (!user.displayName && cleanName) fill.displayName = cleanName;
         if (!user.degree && guess.degree) fill.degree = guess.degree;
         if (!user.graduationYear && guess.graduationYear) fill.graduationYear = guess.graduationYear;
@@ -671,7 +687,7 @@ export async function signInCampusEmail(email: string, fullName?: string | null,
         const [created] = await db.insert(users).values({
             username,
             email: normalized,
-            emailDomain: emailDomain(normalized),
+            emailDomain: academic ? emailDomain(normalized) : null,
             passwordHash,
             displayName: cleanName,
             university,
@@ -682,7 +698,7 @@ export async function signInCampusEmail(email: string, fullName?: string | null,
         }).returning();
         user = created;
     }
-    await recordVerification(user.id, normalized, method);
+    if (academic) await recordVerification(user.id, normalized, method);
 
     const token = jwt.sign(
         { userId: user.id, username: user.username, email: user.email },
@@ -912,9 +928,6 @@ export async function createIdea(userId: string, input: CreateSprintIdeaInput) {
     checkBrief(input.pitch, input.gap, input.ships, compensation);
     if (input.isSmall && !input.hourCap) throw new CampusError(400, "A small build needs an hour cap");
     await assertNoDuplicate(input.title, input.pitch);
-    if (!isAcademicEmail(input.contactEmail)) {
-        throw new CampusError(400, "Contact email must be a university address");
-    }
     const paid = isPaidDeal(input.dealType);
     if (paid && !user.adultConfirmedAt) {
         throw new CampusError(403, "Paid projects need you to confirm you are 18 or older first (Profile → Account)");
@@ -1041,7 +1054,7 @@ export async function createProblem(userId: string, input: CreateProblemInput) {
         authorSemester: snap.authorSemester,
         hideName: input.hideName,
         notAcademicAttestedAt: new Date(),
-        campusDomain: campusOf(user),
+        campusDomain: campusDomainOrNull(user),
     }).returning();
     await db.insert(approaches).values({
         problemId: problem.id,
@@ -2374,7 +2387,8 @@ export async function listSaved(userId: string, cursor?: string) {
 }
 
 const HELP = [
-    { q: "Who can sign in?", a: "Anyone with a university email anywhere in the world (.edu, .ac.in, .edu.np and similar). Use Continue with Google if your university mail runs on Google, or get a one-time code by email. Amrita students can also use college Outlook. Personal Gmail accounts don't work. Attest is not affiliated with any university, and your university stays hidden unless you choose to show it." },
+    { q: "Who can sign in?", a: "Anyone. Use Continue with Google or get a one-time code by email. A university email is optional: signing in with one earns the Verified student stamp and unlocks the campus features (My campus, campus-only posts). Attest is not affiliated with any university." },
+    { q: "How do I thank someone?", a: "Profiles can carry a “Buy me a coffee” link to the person's own tipping page. Tips are voluntary and go straight to them; Attest never handles money. Add yours under Profile → Account." },
     { q: "What does My campus / Everywhere do?", a: "Your campus is everyone who signed in with the same university email domain. The switch on Ideas, Problems, People and Gigs shows either only them or every campus. You can also mark an idea or gig “Only my campus”, and other universities won't see it at all." },
     { q: "How does paid work happen?", a: "Attest never holds money. The idea owner and a builder agree a deal split into milestones. The builder submits each one, the owner accepts it (or it auto-accepts after 7 days), the owner pays the builder directly, and both confirm the payment here. Only payments both sides confirm count as proof. Builders pay no fee. Paid work is for people 18 or older." },
     { q: "What is a gig?", a: "A small job with one milestone. Post “I need this done” or list a service you offer. When the poster accepts a response, it becomes a deal straight away. Gigs show your handle, not your name." },

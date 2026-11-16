@@ -15,7 +15,7 @@ import {
 } from "@/lib/campus-api";
 import { resizeImage } from "@/lib/resize-image";
 import EmptyState from "@/components/campus/EmptyState";
-import { CURRENCIES, DEAL_TYPE_LABELS, DEAL_TYPES, LICENCES, detectAcademicRequest, isAcademicEmail, isPaidDeal, type DealType } from "@embedra/types";
+import { CURRENCIES, DEAL_TYPE_LABELS, DEAL_TYPES, LICENCES, detectAcademicRequest, isPaidDeal, type DealType } from "@embedra/types";
 
 const DEAL_HELP: Record<DealType, string> = {
   paid_fixed: "You pay builders a fixed amount per milestone, directly (UPI, bank, Payoneer, Wise…). Attest never holds the money.",
@@ -174,8 +174,8 @@ export default function NewSprintIdeaPage() {
     event.preventDefault();
     if (!token) return;
     const contactEmail = (form.contactEmail.trim() || user?.email || "").trim().toLowerCase();
-    if (!isAcademicEmail(contactEmail)) {
-      setError("Contact email must be a university address");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+      setError("Add a contact email");
       return;
     }
     if (!form.notAcademicWork) {
@@ -254,7 +254,7 @@ export default function NewSprintIdeaPage() {
   };
 
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-3xl mx-auto">
+    <div className="px-5 sm:px-8 py-6 max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-[#4f46e5]">Post a project</p>
       <h1 className="font-serif text-[34px] font-semibold tracking-tight">Post an idea</h1>
       <p className="text-[14px] text-[#464555] mt-1">
@@ -316,13 +316,13 @@ export default function NewSprintIdeaPage() {
           </label>
           {form.isSmall && field("hourCap", "Hour cap")}
           {field("compensationSentence", "Compensation, one sentence. Leave blank for volunteer.")}
-          <label className="flex items-start gap-2 text-[13px]">
+          {user.hasCampus !== false && <label className="flex items-start gap-2 text-[13px]">
             <input type="checkbox" checked={form.campusOnly} onChange={(e) => set("campusOnly", e.target.checked)} className="mt-1" />
             <span>
               Only my campus can see this.
               <span className="block text-[12px] text-[#777587]">Good for hardware builds and anything you&apos;d rather do in person. Other universities won&apos;t see it anywhere.</span>
             </span>
-          </label>
+          </label>}
           <label className="flex items-center gap-2 text-[13px]">
             <input type="checkbox" checked={form.hideName} onChange={(e) => set("hideName", e.target.checked)} />
             Hide my name. Branch and semester still show.
@@ -443,12 +443,12 @@ export default function NewSprintIdeaPage() {
           <p className="text-[12px] font-semibold uppercase tracking-wider text-[#4f46e5]">5 · Private until accept</p>
           {field("approach", "Approach — how you plan to build it", true)}
           <label className="block text-[12px] font-medium text-[#464555]">
-            Contact email (your university address)
+            Contact email
             <input
               type="email"
               value={form.contactEmail}
               onChange={(e) => set("contactEmail", e.target.value)}
-              placeholder={user?.email || "you@university.edu"}
+              placeholder={user?.email || "you@example.com"}
               className="mt-1 w-full rounded-lg border border-[#c7c4d8] px-3 py-2 text-[14px]"
             />
             <span className="mt-1 block text-[11px] font-normal text-[#777587]">

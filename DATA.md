@@ -618,3 +618,13 @@ At most 5 open kits per owner and 20 needs per kit.
 | Column | Type | Notes |
 |---|---|---|
 | kit_id | uuid, FK kits, nullable | Set when the gig is a need inside a kit. Kit needs are always `request` gigs |
+
+## Open sign-in and tips (added 2026-11-15)
+
+### users (changed)
+| Column | Type | Notes |
+|---|---|---|
+| email_domain | text, nullable | Now set **only for university domains**. Null means the person has no campus, so every campus filter ignores them |
+| tip_url | text, nullable | Optional "buy me a coffee" link. https only, host must be on `TIP_HOSTS` in `packages/types/campus.ts`. Attest never handles the money |
+
+`academic_verifications` rows are written only for university emails.

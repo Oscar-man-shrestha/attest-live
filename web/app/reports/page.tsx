@@ -61,7 +61,7 @@ export default function ReportsPage() {
     row.targetType === "problem" ? `/problems/${row.targetId}` : `/ideas/${row.targetId}`;
 
   return (
-    <div className="px-5 py-6 max-w-2xl mx-auto space-y-4">
+    <div className="px-5 py-6 max-w-2xl xl:max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto space-y-4">
       <div>
         <h1 className="font-serif text-[32px] font-semibold text-[#16161d]">Reports</h1>
         <p className="mt-1 text-[14px] text-[#464555] leading-relaxed">

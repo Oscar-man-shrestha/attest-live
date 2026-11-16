@@ -36,6 +36,7 @@ import {
     detectContactDetails,
     formatMoney,
     isPaidDeal,
+    isTipUrl,
     toMinor,
     type CreateEngagementInput,
 } from "../../../packages/types";
@@ -763,3 +764,74 @@ export async function isSuspended(userId: string) {
     return Boolean(row?.suspendedAt);
 }
 
+
+// ---------- thank-you tips ("buy them a coffee") ----------
+
+/** Saves or clears the profile tip link. Attest only shows the link; it never handles money (RULES 13). */
+export async function setTipUrl(userId: string, tipUrl: string) {
+    const user = await requireWriter(userId);
+    const value = tipUrl.trim();
+    if (value && !isTipUrl(value)) throw new CampusError(400, "Use an https link from a supported tipping service");
+    await db.update(users).set({ tipUrl: value || null }).where(eq(users.id, user.id));
+    return { tipUrl: value || null };
+}
+
+// ---------- trust record and help history (only things someone else confirmed) ----------
+
+export async function trustRecordFor(personId: string) {
+    const [person] = await db.select({ tipUrl: users.tipUrl, username: users.username, createdAt: users.createdAt, emailDomain: users.emailDomain, suspendedAt: users.suspendedAt })
+        .from(users).where(eq(users.id, personId));
+    if (!person) throw new CampusError(404, "Person not found");
+    const rows = await db.execute(sql`
+        select * from (
+            select 'task_signed' as kind, t.signed_at as at, i.title as title, t.title as detail, i.id::text as link_id
+            from tasks t join ideas i on i.id = t.idea_id
+            where t.assignee_id = ${personId} and t.receipt_status = 'signed' and t.signed_at is not null
+              and i.hidden_at is null and i.campus_only = false
+            union all
+            select case when m.status = 'payment_confirmed' then 'milestone_paid' else 'milestone_accepted' end, coalesce(m.accepted_at, m.submitted_at),
+                   coalesce(i.title, g.title), m.title, null
+            from milestones m join engagements e on e.id = m.engagement_id
+            left join ideas i on i.id = e.idea_id left join gigs g on g.id = e.gig_id
+            where e.builder_id = ${personId} and m.status in ('accepted', 'auto_accepted', 'payment_confirmed')
+            union all
+            select 'requested_done', e.completed_at, coalesce(i.title, g.title), null, null
+            from engagements e left join ideas i on i.id = e.idea_id left join gigs g on g.id = e.gig_id
+            where e.requester_id = ${personId} and e.status = 'completed'
+            union all
+            select 'idea_shipped', i.created_at, i.title, null, i.id::text
+            from ideas i where i.owner_id = ${personId} and i.team_status = 'shipped' and i.hidden_at is null and i.hide_name = false and i.campus_only = false
+        ) h where h.at is not null order by h.at desc limit 40`);
+    const history = (rows.rows as { kind: string; at: Date; title: string | null; detail: string | null; link_id: string | null }[]).map((r) => ({
+        kind: r.kind, at: r.at, title: r.title ?? "", detail: r.detail, ideaId: r.link_id,
+    }));
+    const stats = await db.execute(sql`
+        select
+          (select count(*)::int from tasks t where t.assignee_id = ${personId} and t.receipt_status = 'signed') as tasks_signed,
+          (select count(*)::int from milestones m join engagements e on e.id = m.engagement_id
+             where e.builder_id = ${personId} and m.status in ('accepted','auto_accepted','payment_confirmed')) as milestones_accepted,
+          (select count(*)::int from engagements e where (e.builder_id = ${personId} or e.requester_id = ${personId}) and e.status = 'completed') as deals_completed,
+          (select count(distinct x.other)::int from (
+              select e.requester_id as other from engagements e join milestones m on m.engagement_id = e.id
+                where e.builder_id = ${personId} and m.status in ('accepted','auto_accepted','payment_confirmed')
+              union
+              select i.owner_id from tasks t join ideas i on i.id = t.idea_id
+                where t.assignee_id = ${personId} and t.receipt_status = 'signed' and i.owner_id <> ${personId}
+          ) x) as people_helped,
+          (select count(*)::int from engagements e where e.builder_id = ${personId} and e.status = 'cancelled' and e.builder_accepted_at is not null) as deals_dropped`);
+    const s = (stats.rows[0] ?? {}) as Record<string, number>;
+    return {
+        handle: person.username,
+        tipUrl: person.suspendedAt ? null : person.tipUrl,
+        memberSince: person.createdAt,
+        verifiedStudent: Boolean(person.emailDomain),
+        trust: {
+            peopleHelped: Number(s.people_helped ?? 0),
+            milestonesAccepted: Number(s.milestones_accepted ?? 0),
+            tasksSigned: Number(s.tasks_signed ?? 0),
+            dealsCompleted: Number(s.deals_completed ?? 0),
+            dealsDropped: Number(s.deals_dropped ?? 0),
+        },
+        history,
+    };
+}

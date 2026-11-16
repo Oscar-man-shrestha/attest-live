@@ -3,7 +3,7 @@
 Agents and humans: break these only with an explicit user decision recorded in MEMORY.md.
 
 ## Product
-1. Sign-in needs a verified academic email (any university, worldwide). Attest is not a university product and is not affiliated with any university. Verification expires after a year. (Changed 2026-11-15; was campus domain only.)
+1. Anyone can sign in with a verified email (Google, email code, or Amrita Outlook). A university email is optional: it earns the "Verified student" stamp and unlocks campus features. Attest is not a university product and is not affiliated with any university. (Changed 2026-11-15, twice.)
 2. No open DMs. Messages exist only inside an engagement (archived when it closes) or inside a team thread (owner and active team members only). No user-facing idea takedown. No active push notifications (transactional email is fine).
 3. Platform-level suspension is admin-only, needs a written reason, and always allows an appeal. Community bans (if ever) stay one-community scoped.
 4. Owner cannot rate their own idea (legacy ratings). Skills are signed only via receipts.
@@ -23,7 +23,7 @@ Agents and humans: break these only with an explicit user decision recorded in M
 16. Builders pay 0% to Attest. Never add a fee on the student side.
 17a. Campus-only posts (`campus_only`) are never shown to another email domain, in any list or detail endpoint.
 17. No graded coursework, exams or assignments for either party. Every post and engagement carries the not-graded-work attestation. Capstones only as disclosed collaboration. Flags go to human review; never auto-ban.
-18. Never store bank account, card or UPI numbers. Payment references are free-text receipts IDs only.
+18. Never store bank account, card or UPI numbers. Payment references are free-text receipts IDs only. A profile tip link must be an https link to an allowlisted tipping service.
 19. Reviews stay hidden until both sides submit or 14 days pass, and are shown as distributions, not averages.
 
 ## Engineering (also in AGENTS.md)

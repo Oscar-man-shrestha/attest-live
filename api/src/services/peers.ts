@@ -1,6 +1,6 @@
 import { and, db, desc, eq, ideas, isNotNull, isNull, ne, sql, users } from "../../../packages/db/index";
 import { interestLabelVectors } from "../queues/embeddingQueue";
-import { CampusError, inviteMember, requireUser } from "./campusService";
+import { CampusError, campusOf, inviteMember, requireUser } from "./campusService";
 
 /**
  * "Students like you" and circles.
@@ -298,7 +298,7 @@ async function coEngagement(viewerId: string) {
 export async function studentsLikeYou(userId: string, scope: PeopleScope, cursor?: string) {
     const viewer = await requireUser(userId);
     const conditions = [ne(users.id, viewer.id), isNotNull(users.branch), isNotNull(users.displayName)];
-    const viewerCampus = viewer.emailDomain ?? viewer.email.split("@")[1] ?? "";
+    const viewerCampus = campusOf(viewer);
     if (scope === "campus") conditions.push(eq(users.emailDomain, viewerCampus));
     if ((scope === "branch" || scope === "cohort") && viewer.branch) conditions.push(eq(users.branch, viewer.branch));
     if (scope === "cohort" && viewer.semester) conditions.push(eq(users.semester, viewer.semester));

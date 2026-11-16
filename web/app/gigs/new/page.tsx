@@ -62,7 +62,7 @@ export default function NewGigPage() {
   };
 
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-2xl mx-auto">
+    <div className="px-5 sm:px-8 py-6 max-w-2xl xl:max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto">
       <Link href="/gigs" className="text-[13px] text-[#047857]">← Gigs</Link>
       <p className="serial mt-3 text-[#047857]">New gig</p>
       <h1 className="font-serif text-[32px] font-semibold tracking-tight">Post a gig</h1>
@@ -143,12 +143,12 @@ export default function NewGigPage() {
           </div>
         </section>
 
-        <label className="flex items-start gap-2 text-[13px]">
+        {user.hasCampus !== false && <label className="flex items-start gap-2 text-[13px]">
           <input type="checkbox" checked={campusOnly} onChange={(e) => setCampusOnly(e.target.checked)} className="mt-1" />
           <span>Only my campus can see this.
             <span className="block text-[12px] text-[#777587]">Best for anything handed over in person, like hardware.</span>
           </span>
-        </label>
+        </label>}
         <label className="flex items-start gap-2 text-[13px]">
           <input type="checkbox" checked={attest} onChange={(e) => setAttest(e.target.checked)} className="mt-1" />
           <span>This is not graded coursework, an exam, or an assignment.</span>

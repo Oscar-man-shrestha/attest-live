@@ -1,12 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useAuth } from "@/lib/auth-context";
 
 export type CampusScope = "campus" | "all";
 const KEY = "attest_scope";
 
 /** Remembers the viewer's last choice between their own campus and every campus. */
 export function useCampusScope(): [CampusScope, (scope: CampusScope) => void] {
+  const { user } = useAuth();
+  // Only people who signed in with a university email have a campus.
+  const noCampus = Boolean(user) && user?.hasCampus === false;
   const [scope, setScope] = useState<CampusScope>("campus");
   useEffect(() => {
     try {
@@ -23,11 +27,13 @@ export function useCampusScope(): [CampusScope, (scope: CampusScope) => void] {
       /* ignore */
     }
   }, []);
-  return [scope, update];
+  return [noCampus ? "all" : scope, update];
 }
 
 /** Segmented switch: My campus (same university email domain) or Everywhere. */
 export default function CampusSwitch({ value, onChange, className = "" }: { value: CampusScope; onChange: (scope: CampusScope) => void; className?: string }) {
+  const { user } = useAuth();
+  if (user?.hasCampus === false) return null;
   const options: { id: CampusScope; label: string; icon: string }[] = [
     { id: "campus", label: "My campus", icon: "school" },
     { id: "all", label: "Everywhere", icon: "public" },

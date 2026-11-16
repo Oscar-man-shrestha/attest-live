@@ -78,6 +78,13 @@
       "when": 1790480000000,
       "tag": "0010_kits",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1790490000000,
+      "tag": "0011_tip_url",
+      "breakpoints": true
     }
   ]
 }

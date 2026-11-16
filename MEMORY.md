@@ -103,6 +103,13 @@ Research (two reports + targeted searches) says student marketplaces fail for la
 5. Attest is an introducer and record-keeper, not a party to any deal. `/rules` says so and shows a contact address when `NEXT_PUBLIC_SUPPORT_EMAIL` is set.
 6. No third-party accounts or API keys were created for this. Nothing here needs one.
 
+## Open sign-in, thank-you tips and help history decision (2026-11-15, founder)
+1. **Anyone can sign in** with any Google account or any email. A university email is no longer required, and Attest does not tie itself to colleges (RULES 1 changed). Reason: lower friction, and no dependence on any college.
+2. **University email is now an optional trust signal.** Signing in with one earns the "Verified student" stamp and unlocks the campus features (My campus switch, campus-only posts, Same campus badge). People without one never see or use campus features, and are never grouped by their mail provider.
+3. **Thanks, not buying and selling.** The product leads with help and thank-you tips ("buy them a coffee"). A person may add one tip link from an allowlisted service to their profile; Attest shows a button and never touches the money. Fixed-price deals and gigs still exist as an option but are no longer the headline.
+4. **Help history.** Profiles show a trust record (people helped, milestones accepted, tasks signed by teammates, deals completed) and a dated history of each piece of help, built only from things someone else confirmed.
+5. Pages use the full width on large screens.
+
 ## Known limits (2026-11-15)
 - The MiniLM coursework check is weak (homework 0.40 vs a real study-tool idea 0.42). The keyword check is the real guard; the model flags only scores ≥ 0.5. Revisit with a better zero-shot model if flags miss things.
 - Microsoft (Outlook) sign-in still works only for the Amrita tenant. Everyone else signs in with the email code.

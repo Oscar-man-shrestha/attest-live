@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { HANDLE_RE } from "@embedra/types";
 import { useAuth } from "@/lib/auth-context";
-import { CampusApiError, confirmAdult, sendAppeal, setMyHandle } from "@/lib/campus-api";
+import { CampusApiError, confirmAdult, sendAppeal, setMyHandle, setMyTip } from "@/lib/campus-api";
 
 /** Handle, age confirmation and (when suspended) the appeal form. Saved immediately, separate from the profile form. */
 export default function AccountPanel({ token }: { token: string }) {
   const { user, setCurrentUser } = useAuth();
   const [handle, setHandle] = useState(user?.handle || user?.username || "");
   const [appeal, setAppeal] = useState("");
+  const [tip, setTip] = useState(user?.tipUrl || "");
   const [note, setNote] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -76,6 +77,23 @@ export default function AccountPanel({ token }: { token: string }) {
           </div>
         </label>
         {cleanHandle && !HANDLE_RE.test(cleanHandle) && <p className="mt-1 text-[12px] text-[#ba1a1a]">3–24 characters: lowercase letters, numbers and _</p>}
+      </div>
+
+      <div className="border-t border-[#eceaf4] pt-4">
+        <label className="block text-[12px] font-medium text-[#464555]">“Buy me a coffee” link
+          <span className="block font-normal text-[#777587]">Optional. People you helped can thank you through your own tipping page. Attest never handles the money. Works with Buy Me a Coffee, Ko-fi, PayPal.me, Razorpay.me, Patreon, GitHub Sponsors, Open Collective and Liberapay.</span>
+          <div className="mt-1 flex gap-2">
+            <input value={tip} onChange={(e) => setTip(e.target.value)} maxLength={200} placeholder="https://buymeacoffee.com/yourname" className="w-full rounded-lg border border-[#c7c4d8] px-3 py-2 text-[14px]" />
+            <button
+              type="button"
+              disabled={busy === "tip" || tip.trim() === (user.tipUrl || "")}
+              onClick={() => run("tip", async () => { const r = await setMyTip(token, tip.trim()); setCurrentUser({ ...user, tipUrl: r.tipUrl }); }, tip.trim() ? "Tip link saved" : "Tip link removed")}
+              className="px-3 py-2 rounded-lg border border-[#4f46e5] text-[#4f46e5] text-[13px] font-semibold disabled:opacity-40"
+            >
+              Save
+            </button>
+          </div>
+        </label>
       </div>
 
       <div className="border-t border-[#eceaf4] pt-4">

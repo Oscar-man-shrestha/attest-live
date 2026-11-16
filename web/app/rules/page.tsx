@@ -27,15 +27,20 @@ const RULES: { n: string; title: string; body: string[] }[] = [
     ],
   },
   {
+    n: "02b",
+    title: "Thanks are voluntary.",
+    body: ["A profile can link to the person's own tipping page (“Buy me a coffee”). Tips are gifts, go straight to them, and are never required for help. Attest takes nothing and can't refund a tip."],
+  },
+  {
     n: "03",
     title: "Paid work is for people 18 or older.",
     body: ["Both sides of a paid deal confirm they are 18 or older. If you're younger you can still join open-source and credit-only projects."],
   },
   {
     n: "04",
-    title: "You sign in with a university email. You choose what others see.",
+    title: "Anyone can join. You choose what others see.",
     body: [
-      "A university email is the one requirement, so everyone here is a student. Attest is not affiliated with any university.",
+      "Sign in with any Google account or email. A university email is optional: it earns the Verified student stamp and campus features. Attest is not affiliated with any university or college.",
       "Other people see your handle. Your university is hidden unless you turn it on, though people on your own campus can see a “Same campus” badge. Your email is never shown.",
       "Your payment app may show your legal name to the person you pay or who pays you. That happens outside Attest.",
     ],
@@ -112,7 +117,7 @@ export default function RulesPage() {
         <p className="mt-4 text-[12px] leading-relaxed text-[#777587]">
           These rules are a plain-language summary and may change as Attest grows. <Link href="/pricing" className="font-semibold text-[#141b2b] underline underline-offset-2">Plans</Link>: students never pay.
         </p>
-        <Link href="/login" className="mt-5 inline-flex rounded-xl bg-[#141b2b] px-5 py-3 text-[14px] font-semibold text-white">Sign in with your university email</Link>
+        <Link href="/login" className="mt-5 inline-flex rounded-xl bg-[#141b2b] px-5 py-3 text-[14px] font-semibold text-white">Sign in</Link>
       </article>
     </div>
   );

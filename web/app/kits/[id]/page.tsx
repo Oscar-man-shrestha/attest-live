@@ -87,7 +87,7 @@ export default function KitPage() {
   const open = kit.status === "open";
 
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-3xl mx-auto space-y-5">
+    <div className="px-5 sm:px-8 py-6 max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto space-y-5">
       <Link href="/kits" className="text-[13px] text-[#047857]">← Kits</Link>
 
       <header className="ticket">

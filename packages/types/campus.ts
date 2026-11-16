@@ -193,9 +193,6 @@ export const campusEmailSchema = z
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Enter a valid email" });
             return;
         }
-        if (!isAcademicEmail(email)) {
-            ctx.addIssue({ code: z.ZodIssueCode.custom, message: "Use your university email (for example .edu, .ac.in or .edu.np)" });
-        }
     });
 /** Any verified academic email, worldwide. Kept under the old name so existing imports keep working. */
 export const academicEmailSchema = campusEmailSchema;
@@ -726,3 +723,21 @@ export const kitNeedSchema = z.object({
     }
 });
 export const kitListQuerySchema = z.object({ campus: z.enum(["1"]).optional(), mine: z.enum(["1"]).optional(), cursor: z.string().max(200).optional() });
+
+// ---------- THANK-YOU TIPS ("buy them a coffee") ----------
+/** Tipping services a profile may link to. Attest only shows the link; it never handles money. */
+export const TIP_HOSTS = ["buymeacoffee.com", "ko-fi.com", "paypal.me", "razorpay.me", "rzp.io", "patreon.com", "github.com", "opencollective.com", "liberapay.com"] as const;
+export function isTipUrl(value: string) {
+    try {
+        const url = new URL(value);
+        const host = url.hostname.toLowerCase().replace(/^www\./, "");
+        if (url.protocol !== "https:") return false;
+        if (host === "github.com") return url.pathname.startsWith("/sponsors/");
+        return (TIP_HOSTS as readonly string[]).includes(host);
+    } catch {
+        return false;
+    }
+}
+export const tipUrlSchema = z.object({
+    tipUrl: z.string().trim().max(200).refine((v) => v === "" || isTipUrl(v), "Use an https link from Buy Me a Coffee, Ko-fi, PayPal.me, Razorpay.me, Patreon, GitHub Sponsors, Open Collective or Liberapay"),
+});

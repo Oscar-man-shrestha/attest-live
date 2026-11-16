@@ -47,7 +47,7 @@ export default function DealsPage() {
   };
 
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-3xl mx-auto">
+    <div className="px-5 sm:px-8 py-6 max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto">
       <p className="serial text-[#047857]">Deals · milestones and payments</p>
       <h1 className="font-serif text-[32px] font-semibold tracking-tight">Your deals</h1>
       <p className="text-[14px] text-[#464555] mt-1">

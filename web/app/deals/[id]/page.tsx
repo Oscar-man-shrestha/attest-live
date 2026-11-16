@@ -78,7 +78,7 @@ export default function DealPage() {
   const isBuilder = deal.role === "builder";
 
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-3xl mx-auto space-y-5">
+    <div className="px-5 sm:px-8 py-6 max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto space-y-5">
       <div>
         <Link href="/deals" className="text-[13px] text-[#4f46e5]">← All deals</Link>
         <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-[#047857]">

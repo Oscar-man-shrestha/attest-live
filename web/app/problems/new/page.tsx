@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { createSprintProblem, draftText, CampusApiError } from "@/lib/campus-api";
 import EmptyState from "@/components/campus/EmptyState";
-import { detectAcademicRequest, isAcademicEmail } from "@embedra/types";
+import { detectAcademicRequest } from "@embedra/types";
 
 export default function NewProblemPage() {
   const { user, token, isLoading } = useAuth();
@@ -38,7 +38,7 @@ export default function NewProblemPage() {
   }
 
   return (
-    <div className="px-5 py-6 max-w-2xl mx-auto">
+    <div className="px-5 py-6 max-w-2xl xl:max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto">
       <p className="text-[11px] font-semibold uppercase tracking-wider text-[#b45309]">Real pains</p>
       <h1 className="font-serif text-[32px] font-semibold">Report a problem</h1>
       <p className="text-[14px] text-[#464555] mt-1">Name a real pain in concrete terms — on campus, in a club, a local business, anywhere. Someone else can propose an idea and own the build. You get source credit without being added to the build team. Deeper notes stay hidden until you accept.</p>
@@ -48,8 +48,8 @@ export default function NewProblemPage() {
           event.preventDefault();
           if (!token) return;
           const contactEmail = (form.contactEmail.trim() || user?.email || "").trim().toLowerCase();
-          if (!isAcademicEmail(contactEmail)) {
-            setError("Contact email must be a university address");
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(contactEmail)) {
+            setError("Add a contact email");
             return;
           }
           if (!form.notAcademicWork) {
@@ -99,12 +99,12 @@ export default function NewProblemPage() {
         <p className="text-[12px] font-semibold text-[#b45309]">Private until accept</p>
         <textarea value={form.approach} onChange={(e) => set("approach", e.target.value)} rows={3} placeholder="Deeper notes — unlocks after you accept a builder" className="w-full rounded-lg border border-[#e8d9c4] px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#b45309]/25" />
         <label className="block text-[12px] font-medium text-[#464555]">
-          Contact email (your university address)
+          Contact email
           <input
             type="email"
             value={form.contactEmail}
             onChange={(e) => set("contactEmail", e.target.value)}
-            placeholder={user?.email || "you@university.edu"}
+            placeholder={user?.email || "you@example.com"}
             className="mt-1 w-full rounded-lg border border-[#e8d9c4] px-3 py-2 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#b45309]/25"
           />
         </label>

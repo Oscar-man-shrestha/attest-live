@@ -119,7 +119,7 @@ export default function CampusProfilePage() {
   };
 
   return (
-    <div className="px-5 py-6 max-w-4xl mx-auto grid lg:grid-cols-[1fr_280px] gap-4">
+    <div className="px-5 py-6 max-w-4xl xl:max-w-6xl mx-auto grid lg:grid-cols-[1fr_280px] gap-4">
       <div className="space-y-4 min-w-0">
         <section className="bg-white rounded-xl overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
           <div className="relative h-28 bg-gradient-to-r from-[#4f46e5] via-[#6366f1] to-[#a5b4fc]">

@@ -33,7 +33,7 @@ export default function HelpPage() {
   }, [token]);
 
   return (
-    <div className="px-5 py-6 max-w-2xl mx-auto space-y-5">
+    <div className="px-5 py-6 max-w-2xl xl:max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto space-y-5">
       <div>
         <h1 className="font-serif text-[32px] font-semibold">Help</h1>
         <p className="text-[14px] text-[#464555] mt-1">Sprint rules and the happy path. This page cannot accept, remove, ship, or sign for you.</p>

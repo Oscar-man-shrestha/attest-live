@@ -21,6 +21,7 @@ import {
     reviewSchema,
     submitMilestoneSchema,
     suspendUserSchema,
+    tipUrlSchema,
     updateHandleSchema,
 } from "../../../packages/types";
 import { CampusError } from "../services/campusService";
@@ -115,7 +116,8 @@ export const recordPayment = handle(recordPaymentSchema, "body", (userId, id, in
 export const confirmPayment = handle(null, "body", (userId, id) => deals.confirmPaymentReceived(userId, id));
 
 // Reviews + deal record on profiles
-export const personReviews = handle(null, "body", async (_userId, id) => ({ reviews: await deals.reviewSummaryFor(id), deals: await deals.dealRecordFor(id) }));
+export const personReviews = handle(null, "body", async (_userId, id) => ({ reviews: await deals.reviewSummaryFor(id), deals: await deals.dealRecordFor(id), ...(await deals.trustRecordFor(id)) }));
+export const setTipUrl = handle(tipUrlSchema, "body", (userId, _id, input) => deals.setTipUrl(userId, input.tipUrl));
 
 // Account
 export const setHandle = handle(updateHandleSchema, "body", (userId, _id, input) => deals.setHandle(userId, input.handle));

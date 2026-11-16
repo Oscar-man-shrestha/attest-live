@@ -61,7 +61,7 @@ export default function KitsPage() {
   };
 
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-5xl mx-auto space-y-5">
+    <div className="px-5 sm:px-8 py-6 max-w-5xl 2xl:max-w-7xl mx-auto space-y-5">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="serial text-[#047857]">Kits · for fests, clubs and local businesses</p>
@@ -100,10 +100,10 @@ export default function KitsPage() {
           <label className="block text-[12px] font-medium text-[#464555]">One line about it <span className="font-normal text-[#777587]">(optional)</span>
             <input value={description} onChange={(e) => setDescription(e.target.value)} maxLength={600} className={input} />
           </label>
-          <label className="flex items-start gap-2 text-[13px]">
+          {user?.hasCampus !== false && <label className="flex items-start gap-2 text-[13px]">
             <input type="checkbox" checked={campusOnly} onChange={(e) => setCampusOnly(e.target.checked)} className="mt-1" />
             <span>Only my campus can see this kit and its needs.</span>
-          </label>
+          </label>}
           <label className="flex items-start gap-2 text-[13px]">
             <input type="checkbox" checked={attest} onChange={(e) => setAttest(e.target.checked)} className="mt-1" />
             <span>Nothing in this kit is graded coursework, an exam, or an assignment.</span>

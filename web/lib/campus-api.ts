@@ -829,7 +829,14 @@ export type DealSummary = {
   createdAt: string;
 };
 export type DealMessage = { id: string; mine: boolean; handle: string; body: string; flag: string | null; createdAt: string };
+export type HelpEvent = { kind: string; at: string; title: string; detail: string | null; ideaId: string | null };
 export type PersonRecord = {
+  handle?: string;
+  tipUrl?: string | null;
+  memberSince?: string;
+  verifiedStudent?: boolean;
+  trust?: { peopleHelped: number; milestonesAccepted: number; tasksSigned: number; dealsCompleted: number; dealsDropped: number };
+  history?: HelpEvent[];
   reviews: { count: number; onTime: number[]; communication: number[]; quality: number[]; wouldWorkAgain: { yes: number; no: number } };
   deals: { id: string; title: string; role: string; dealType: string; milestonesDone: number; paidMilestones: number; paidConfirmed: string | null; completedAt: string | null }[];
 };
@@ -901,6 +908,9 @@ export function confirmAdult(token: string) {
 }
 export function setMyPrivacy(token: string, showInstitution: boolean) {
   return request<{ showInstitution: boolean }>("/campus/me/privacy", token, { method: "PUT", body: JSON.stringify({ showInstitution }) });
+}
+export function setMyTip(token: string, tipUrl: string) {
+  return request<{ tipUrl: string | null }>("/campus/me/tip", token, { method: "PUT", body: JSON.stringify({ tipUrl }) });
 }
 export function sendAppeal(token: string, text: string) {
   return request<{ appealed: boolean }>("/campus/me/appeal", token, post({ text }));

@@ -22,7 +22,7 @@ import {
     users,
 } from "../../../packages/db/index";
 import { DEFAULT_IP_TERMS, formatMoney, toMinor, type CreateGigInput } from "../../../packages/types";
-import { CampusError, campusOf, flagIfAcademic, requireUser } from "./campusService";
+import { CampusError, campusDomainOrNull, campusOf, flagIfAcademic, hasCampus, requireUser } from "./campusService";
 import { activePaidCount, logEvent, MAX_ACTIVE_PAID_PER_BUILDER, notifyUser, requireWriter } from "./dealService";
 
 type GigRow = typeof gigs.$inferSelect;
@@ -103,8 +103,8 @@ export async function createGig(userId: string, input: CreateGigInput) {
         currency: paid ? input.currency ?? null : null,
         priceMinor: paid && input.price ? toMinor(input.price) : null,
         deliveryDays: input.deliveryDays ?? null,
-        campusDomain: campusOf(author),
-        campusOnly: input.campusOnly,
+        campusDomain: campusDomainOrNull(author),
+        campusOnly: input.campusOnly && hasCampus(author),
         notAcademicAttestedAt: new Date(),
     }).returning();
     await flagIfAcademic("gig", gig.id, `${input.title}\n${input.description}`);

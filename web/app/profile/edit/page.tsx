@@ -251,7 +251,7 @@ export default function EditProfilePage() {
   // ──────────────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <main className="max-w-3xl mx-auto px-4 sm:px-6 py-12 space-y-6">
+      <main className="max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto px-4 sm:px-6 py-12 space-y-6">
         <div className="h-4 w-32 bg-slate-200/70 animate-pulse rounded-md" />
         <div className="bg-white border border-slate-200/90 rounded-2xl p-8 space-y-6 card-elevation animate-pulse">
           <div className="h-8 w-1/3 bg-slate-200 rounded-lg" />
@@ -265,7 +265,7 @@ export default function EditProfilePage() {
   // Edit Profile Form
   // ──────────────────────────────────────────────────────────────
   return (
-    <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 space-y-8">
+    <main className="max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto px-4 sm:px-6 py-10 space-y-8">
 
       {/* ── Breadcrumbs ── */}
       <div className="flex items-center space-x-2 text-xs text-slate-500">

@@ -139,7 +139,7 @@ function IdeasBoardInner() {
   );
 
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-5xl mx-auto space-y-5">
+    <div className="px-5 sm:px-8 py-6 max-w-5xl 2xl:max-w-7xl mx-auto space-y-5">
       <div className="flex items-end justify-between gap-3">
         <div>
           <p className="serial text-[#4f46e5]">Ideas · builds seeking teammates</p>

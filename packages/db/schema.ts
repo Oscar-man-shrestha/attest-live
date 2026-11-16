@@ -52,6 +52,7 @@ export const users = pgTable("users", {
     suspensionAppeal: text("suspension_appeal"),
     appealedAt: timestamp("appealed_at"),
     emailDomain: text("email_domain"),
+    tipUrl: text("tip_url"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

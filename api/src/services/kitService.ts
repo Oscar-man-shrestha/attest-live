@@ -6,7 +6,7 @@
  */
 import { and, count, db, desc, engagements, eq, gigResponses, gigs, inArray, isNull, kits, lt, milestones, or, users } from "../../../packages/db/index";
 import { formatMoney, toMinor } from "../../../packages/types";
-import { CampusError, campusOf, flagIfAcademic, requireUser } from "./campusService";
+import { CampusError, campusDomainOrNull, campusOf, flagIfAcademic, hasCampus, requireUser } from "./campusService";
 import { logEvent, requireWriter } from "./dealService";
 import { gigDto } from "./gigService";
 
@@ -67,8 +67,8 @@ export async function createKit(userId: string, input: { name: string; kind: str
         kind: input.kind,
         description: input.description?.trim() || null,
         eventDate: input.eventDate ? new Date(input.eventDate) : null,
-        campusDomain: campusOf(owner),
-        campusOnly: input.campusOnly,
+        campusDomain: campusDomainOrNull(owner),
+        campusOnly: input.campusOnly && hasCampus(owner),
     }).returning();
     await logEvent("kit_created", owner.id, "kit", kit.id);
     return { kit: kitDto(kit, owner.username, owner) };

@@ -167,7 +167,7 @@ export default function WorkPage() {
 
   if (!work) {
     return (
-      <div className="px-5 py-12 max-w-4xl mx-auto text-center space-y-3">
+      <div className="px-5 py-12 max-w-4xl xl:max-w-6xl mx-auto text-center space-y-3">
         <p className="text-[15px] text-[#777587]">{error || "Loading workspace…"}</p>
         {error && (
           <Link href="/ideas" className="inline-block text-[13px] text-[#4f46e5] font-semibold hover:underline">
@@ -361,7 +361,7 @@ export default function WorkPage() {
   };
 
   return (
-    <div className="px-4 py-6 max-w-4xl mx-auto space-y-6">
+    <div className="px-4 py-6 max-w-4xl xl:max-w-6xl mx-auto space-y-6">
       {/* Top Breadcrumb & Status */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e5e7eb] pb-4">
         <div>

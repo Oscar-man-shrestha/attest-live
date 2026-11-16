@@ -1,10 +1,9 @@
 /**
  * Sign in with Google (OpenID Connect, authorization-code flow).
- * The academic-email rule still applies: only verified university addresses get in (RULES 1).
+ * Any Google account with a verified email may sign in; a university address also earns the Verified student stamp (RULES 1).
  */
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
-import { isAcademicEmail } from "../../../packages/types";
 import { CampusError, signInCampusEmail } from "./campusService";
 
 const JWT_SECRET = process.env.JWT_SECRET || "embedra_super_secret_jwt_key_2026";
@@ -58,7 +57,7 @@ export function googleSignInUrl(next: string | undefined) {
     return { url: `${AUTH_URL}?${params.toString()}`, state };
 }
 
-/** Checks the ID token's claims. Returns the verified, lowercased university email. Pure, so it can be tested without Google. */
+/** Checks the ID token's claims. Returns the verified, lowercased email. Pure, so it can be tested without Google. */
 export function validateGoogleClaims(claims: GoogleClaims | null, clientId: string, nonce: string, now = Date.now()) {
     if (!claims || claims.aud !== clientId || claims.nonce !== nonce || !ISSUERS.includes(claims.iss ?? "")) {
         throw new CampusError(401, "Google did not confirm that sign-in. Try again.");
@@ -67,9 +66,6 @@ export function validateGoogleClaims(claims: GoogleClaims | null, clientId: stri
     const email = (claims.email ?? "").trim().toLowerCase();
     const verified = claims.email_verified === true || claims.email_verified === "true";
     if (!email || !verified) throw new CampusError(403, "Google hasn't verified that email address. Use the email code instead.");
-    if (!isAcademicEmail(email)) {
-        throw new CampusError(403, "That's a personal Google account. Attest needs your university account: pick it in Google's account chooser, or use the email code with your university address.");
-    }
     return email;
 }
 

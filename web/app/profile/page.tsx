@@ -182,7 +182,7 @@ export default function CampusProfilePage() {
   const editing = Boolean(user?.profileComplete);
 
   return (
-    <div className="px-5 py-8 max-w-2xl mx-auto">
+    <div className="px-5 py-8 max-w-2xl xl:max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto">
       {editing ? (
         <>
           <div className="flex items-start justify-between gap-3">

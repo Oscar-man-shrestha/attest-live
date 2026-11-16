@@ -99,7 +99,7 @@ function NewDealForm() {
   }
 
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-2xl mx-auto">
+    <div className="px-5 sm:px-8 py-6 max-w-2xl xl:max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto">
       <Link href={`/ideas/${ideaId}/work`} className="text-[13px] text-[#4f46e5]">← Back to the team</Link>
       <p className="mt-3 text-[11px] font-semibold uppercase tracking-wider text-[#047857]">New deal</p>
       <h1 className="font-serif text-[30px] font-semibold tracking-tight">Propose a deal with {builder.name}</h1>

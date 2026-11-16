@@ -46,7 +46,7 @@ export default function GigPage() {
   const open = gig.status === "open" && !gig.hidden;
 
   return (
-    <div className="px-5 sm:px-8 py-6 max-w-2xl mx-auto space-y-5">
+    <div className="px-5 sm:px-8 py-6 max-w-2xl xl:max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto space-y-5">
       <Link href="/gigs" className="text-[13px] text-[#047857]">← Gigs</Link>
 
       <article className="ticket">

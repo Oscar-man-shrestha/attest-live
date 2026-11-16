@@ -109,9 +109,10 @@ function LoginForm() {
           </h1>
           <ul className="mt-7 space-y-4 text-[15px] text-[#464555]">
             {[
-              ["school", "One rule to get in: a university email. That's how everyone knows you're a student."],
-              ["visibility_off", "Your university stays hidden unless you choose to show it. You get a handle, not your roll number."],
-              ["payments", "Builders pay no fee, and Attest never holds your money."],
+              ["how_to_reg", "Sign in with Google or any email. No college ID needed."],
+              ["school", "Have a university email? Use it to earn the Verified student stamp and see your own campus first."],
+              ["volunteer_activism", "Help people build things. They can thank you with a coffee, and every bit of help shows on your profile."],
+              ["payments", "Free to use. Attest never holds anyone's money."],
             ].map(([icon, text]) => (
               <li key={icon} className="flex items-start gap-3">
                 <span className="material-symbols-outlined mt-0.5 text-[20px] text-[#4f46e5]" aria-hidden>{icon}</span>
@@ -120,7 +121,7 @@ function LoginForm() {
             ))}
           </ul>
           <div className="mt-8">
-            <Stamp tone="ink" large icon="verified">Verified student</Stamp>
+            <Stamp tone="ink" large icon="verified">Proof of help</Stamp>
           </div>
         </div>
 
@@ -134,11 +135,11 @@ function LoginForm() {
             <div className="px-6 pt-6 pb-5">
               <div className="flex items-center justify-between">
                 <span className="serial">Entry pass</span>
-                <span className="serial">University email only</span>
+                <span className="serial">Open to everyone</span>
               </div>
               <h2 className="mt-2 font-serif text-[26px] font-semibold leading-tight text-[#141b2b]">Sign in to Attest</h2>
               <p className="mt-1 text-[13px] leading-relaxed text-[#777587]">
-                Any university, anywhere: .edu, .ac.in, .edu.np and similar. The first sign-in creates your account.
+                Use any Google account or any email. The first sign-in creates your account. A university email is optional and earns the Verified student stamp.
               </p>
 
               {methods.google && (
@@ -152,7 +153,7 @@ function LoginForm() {
                     <GoogleMark />
                     Continue with Google
                   </button>
-                  <p className="mt-2 text-center text-[11px] text-[#777587]">Pick your university Google account. Personal Gmail won&apos;t work.</p>
+                  <p className="mt-2 text-center text-[11px] text-[#777587]">Any Google account works.</p>
                 </>
               )}
 
@@ -167,14 +168,14 @@ function LoginForm() {
               {methods.emailCode && (
                 <form onSubmit={sent ? verify : send} className={`space-y-3 ${methods.google ? "" : "mt-5"}`}>
                   <label className="block text-[12px] font-medium text-[#464555]">
-                    University email
+                    Email
                     <input
                       type="email"
                       required
                       autoComplete="email"
                       value={email}
                       onChange={(event) => setEmail(event.target.value)}
-                      placeholder="you@university.edu"
+                      placeholder="you@example.com"
                       className="mt-1 w-full rounded-lg border border-[#c7c4d8] px-3 py-2.5 text-[14px]"
                     />
                   </label>
@@ -237,7 +238,7 @@ function LoginForm() {
           </div>
           <p className="mt-4 text-center text-[12px] leading-relaxed text-[#777587]">
             By signing in you agree to the <Link href="/rules" className="font-semibold text-[#141b2b] underline underline-offset-2">house rules</Link>: real projects only, never graded coursework.
-            Attest is not affiliated with any university.
+            Attest is not affiliated with any university or college.
           </p>
         </div>
       </div>

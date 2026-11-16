@@ -65,19 +65,19 @@ export default function HomePage() {
             <span className="font-serif text-[26px] font-bold tracking-tight text-[#141b2b]">Attest</span>
           </p>
           <h1 className="animate-rise delay-1 mt-6 font-serif text-[44px] sm:text-[64px] font-semibold leading-[1.02] tracking-tight text-[#141b2b]">
-            Build it. <span className="hl-green">Get paid.</span>
+            Help build it. <span className="hl-green">Get thanked.</span>
             <br />
             <span className="hl-indigo">Prove it.</span>
           </h1>
           <p className="animate-rise delay-2 mt-6 max-w-xl text-[17px] sm:text-[19px] leading-relaxed text-[#464555]">
-            Students team up on real software and hardware projects, on their own campus or across the world. Every accepted milestone and confirmed payment becomes a stamped record of who built what.
+            People with ideas meet people who can build. Help on real software and hardware projects, get a coffee as thanks if they want to give one, and keep a stamped record of everything you helped with.
           </p>
           <div className="animate-rise delay-3 mt-8 flex flex-wrap items-center gap-3">
             <Link
               href="/login"
               className="inline-flex items-center gap-2 rounded-xl bg-[#141b2b] px-5 py-3.5 text-[15px] font-semibold text-white shadow-[4px_4px_0_0_#4f46e5] transition-all duration-150 hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_#4f46e5]"
             >
-              Sign in with your university email
+              Sign in free
               <span className="material-symbols-outlined text-[18px]" aria-hidden>arrow_forward</span>
             </Link>
             <a href="#how" className="text-[14px] font-semibold text-[#141b2b] underline decoration-[#4f46e5] decoration-2 underline-offset-4">
@@ -85,7 +85,7 @@ export default function HomePage() {
             </a>
           </div>
           <ul className="animate-rise delay-3 mt-7 flex flex-wrap gap-x-5 gap-y-2 serial">
-            <li>Any university email</li>
+            <li>Any Google account or email</li>
             <li>Builders pay 0%</li>
             <li>We never hold your money</li>
             <li>Not for graded coursework</li>

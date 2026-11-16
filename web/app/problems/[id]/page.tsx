@@ -38,7 +38,7 @@ export default function ProblemPage() {
   const mine = user?.id === problem.authorId;
 
   return (
-    <div className="px-5 py-6 max-w-3xl mx-auto space-y-4">
+    <div className="px-5 py-6 max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto space-y-4">
       <p className="text-[11px] uppercase tracking-wider text-[#b45309] font-semibold">
         {problem.hasIdea ? "PROBLEM · HAS IDEA" : "PROBLEM · NEEDS IDEA"}
       </p>

@@ -102,6 +102,7 @@ router.post("/kits/:id/close", deals.closeKit);
 router.put("/me/handle", deals.setHandle);
 router.post("/me/adult", deals.confirmAdult);
 router.put("/me/privacy", deals.setPrivacy);
+router.put("/me/tip", deals.setTipUrl);
 router.post("/me/appeal", deals.appeal);
 
 // Moderation (admin only)
