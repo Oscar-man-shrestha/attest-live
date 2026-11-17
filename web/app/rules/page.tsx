@@ -41,7 +41,7 @@ const RULES: { n: string; title: string; body: string[] }[] = [
     title: "Anyone can join. You choose what others see.",
     body: [
       "Sign in with any Google account or email. A university email is optional: it earns the Verified student stamp and campus features. Attest is not affiliated with any university or college.",
-      "Other people see your handle. Your university is hidden unless you turn it on, though people on your own campus can see a “Same campus” badge. Your email is never shown.",
+      "Other people see your handle. Your university is hidden unless you turn it on, though people on your own campus can see a “Same campus” badge. Your sign-in email is never shown publicly. The contact email on an idea or problem (your sign-in email unless you change it) is shared only with people you accept onto the team.",
       "Your payment app may show your legal name to the person you pay or who pays you. That happens outside Attest.",
     ],
   },

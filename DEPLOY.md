@@ -2,6 +2,13 @@
 
 Work top to bottom. Boxes marked **(you)** need the founder: they involve accounts, secrets or legal sign-off that an agent must not do alone.
 
+## Status on the founder's machine (2026-11-17)
+- Google sign-in: **done for local use.** Google Cloud project `attest-515009`, OAuth client "Attest web", redirect `http://localhost:3001/login/google/callback`, keys in `api/.env`. The app is in Google's **Testing** mode: only test users can sign in (cap 100). To open it to everyone, deploy to a real domain, fill in Branding (home page, `/privacy`, `/rules`, authorized domain), add the production redirect URI, then Audience → Publish app.
+- Admin: `pixel_97135` (founder's Outlook account).
+- Contact email: set in `web/.env.local` (`NEXT_PUBLIC_SUPPORT_EMAIL`).
+- Test data: kept on purpose (7 seed/test accounts).
+- Still open: Resend sending domain (needs a domain you own), lawyer review, first real Kit.
+
 ## 1. Sign-in (nobody can join until one of these works)
 The sign-in page only shows methods that are set up (`GET /api/v1/auth/campus/methods`).
 

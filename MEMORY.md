@@ -110,6 +110,11 @@ Research (two reports + targeted searches) says student marketplaces fail for la
 4. **Help history.** Profiles show a trust record (people helped, milestones accepted, tasks signed by teammates, deals completed) and a dated history of each piece of help, built only from things someone else confirmed.
 5. Pages use the full width on large screens.
 
+## Setup done by the agent (2026-11-17, founder said "do everything yourself")
+- Google Cloud project `attest-515009` with OAuth client "Attest web" (localhost:3001 redirect). Keys live only in `api/.env`. App is in Testing mode until there is a public domain with Branding filled in.
+- `pixel_97135` is admin. Contact email is the founder's Gmail, set in `web/.env.local`.
+- Seed/test accounts kept on the founder's choice.
+
 ## Known limits (2026-11-15)
 - The MiniLM coursework check is weak (homework 0.40 vs a real study-tool idea 0.42). The keyword check is the real guard; the model flags only scores ≥ 0.5. Revisit with a better zero-shot model if flags miss things.
 - Microsoft (Outlook) sign-in still works only for the Amrita tenant. Everyone else signs in with the email code.

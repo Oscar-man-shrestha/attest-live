@@ -9,7 +9,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: "What we keep",
     body: [
-      "Your email address, to sign you in. It is never shown to other people.",
+      "Your email address, to sign you in. It is never shown publicly. The contact email on an idea or problem (your sign-in email unless you change it) is shared only with teammates you accept.",
       "Your profile: name, handle, branch, semester, skills, interests, links, and anything else you choose to add. CGPA is optional and only shown to you and to owners of ideas you ask to join.",
       "If you sign in with a university email, its domain, so we can show the Verified student stamp and your campus. Your university name stays hidden unless you turn it on.",
       "What you post and do here: ideas, problems, gigs, kits, comments, likes, saves, team and deal messages, tasks, milestones, reviews and reports.",
@@ -40,7 +40,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
   {
     title: "Who can see what",
     body: [
-      "Other people see your handle, your public profile, and what you post. Hidden-name posts don't show your name or link to your profile.",
+      "Other people see your handle, your public profile, and what you post. Hidden-name posts don't show your name or link to your profile. Your “Buy me a coffee” link, if you add one, opens your own tipping page, which may show your name.",
       "Team threads are visible only to that team. Deal threads only to the two people in the deal.",
       "Admins can see reported posts, coursework flags and suspension appeals to keep the site safe.",
       "Campus-only posts are never shown to people from another university.",
