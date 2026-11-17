@@ -752,6 +752,13 @@ export const PLANS: Record<PlanId, { name: string; priceMinor: number | null; cu
     pro: { name: "Pro", priceMinor: 79900, currency: "INR", period: "per month", members: 10, openKits: 25, needsPerKit: 50, csvExport: true, badge: true },
     campus: { name: "Campus", priceMinor: null, currency: "INR", period: "by arrangement", members: 50, openKits: 100, needsPerKit: 100, csvExport: true, badge: true },
 };
+/**
+ * Paid plans are switched off for now (founder decision, 2026-11-17): every workspace gets LAUNCH_PLAN
+ * at no cost, upgrade requests are refused and no price is shown anywhere. Set to true to turn billing
+ * back on; PLANS and the manual billing flow are kept for that day.
+ */
+export const BILLING_ENABLED = false;
+export const LAUNCH_PLAN = { name: "Free", priceMinor: 0, currency: "INR", period: "while Attest is new", members: 10, openKits: 25, needsPerKit: 50, csvExport: true, badge: false };
 export const createWorkspaceSchema = z.object({
     name: z.string().trim().min(3).max(60),
     kind: z.enum(KIT_KINDS),

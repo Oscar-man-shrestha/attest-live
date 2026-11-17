@@ -7,7 +7,7 @@ Work top to bottom. Boxes marked **(you)** need the founder: they involve accoun
 - Admin: `pixel_97135` (founder's Outlook account).
 - Contact email: set in `web/.env.local` (`NEXT_PUBLIC_SUPPORT_EMAIL`).
 - Test data: kept on purpose (7 seed/test accounts).
-- Workspaces and plans: built. Billing is manual (see section 7a). Prices are placeholders in `PLANS`, `packages/types/campus.ts`.
+- Workspaces: built and **free for everyone** for now (`BILLING_ENABLED = false` in `packages/types/campus.ts`). Paid plans show as "Coming soon". Section 7a applies only once you switch billing on.
 - Still open: Resend sending domain (needs a domain you own), lawyer review, CA advice on invoicing and GST, first real Kit, first paying workspace.
 
 ## 1. Sign-in (nobody can join until one of these works)
@@ -69,7 +69,7 @@ Put web and API behind HTTPS. Load balancers can probe `/api/v1/health` (always 
 10. Suspend and un-suspend a test account as admin; the suspended account can still read and appeal.
 11. Check a hidden-name idea as an unrelated student: no owner name or id is shown.
 12. Open the site on a phone: the bottom bar shows six tabs and nothing scrolls sideways.
-13. Create a workspace, add a teammate by handle, start a Kit from it, then **Request Pro**. As admin, Reports → Billing → **Payment received — activate**. The Kit now shows "Verified organiser" and **Export CSV** downloads.
+13. Create a workspace, add a teammate by handle, start a Kit from it. **Export CSV** downloads. `/pricing` shows Pro and Campus as "Coming soon" with no price.
 
 ## 7. Before you take real money or real users **(you)**
 - [ ] A lawyer reviews: the house rules (`/rules`), the default ownership (IP) terms in deals, Terms of Use and a Privacy Policy (neither exists yet), and whether India's DPDP Act or other privacy laws apply to you.
@@ -78,7 +78,9 @@ Put web and API behind HTTPS. Load balancers can probe `/api/v1/health` (always 
 - [ ] Decide how people contact you (support email) and add it to `/rules` and `/help`.
 - [ ] Collect your first 30 real projects by hand before inviting builders (see the research report).
 
-## 7a. Taking payment for workspace plans **(you)**
+## 7a. Taking payment for workspace plans **(you, later)**
+Off for now. Set `BILLING_ENABLED = true` in `packages/types/campus.ts` first, and tell existing workspaces before you do.
+
 Attest has no card checkout. The flow is manual and needs no payment keys:
 1. A workspace owner clicks **Request Pro** (or **Ask about Campus**). Admins get a notice.
 2. In **Reports → Billing** you see the workspace, the owner's email and the list price.

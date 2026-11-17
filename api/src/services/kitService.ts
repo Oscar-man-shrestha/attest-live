@@ -5,7 +5,7 @@
  * This is the free "single-player" tool for the demand side (MEMORY.md, SaaS direction).
  */
 import { and, count, db, desc, engagements, eq, gigResponses, gigs, inArray, isNull, kits, lt, milestones, or, users } from "../../../packages/db/index";
-import { formatMoney, toMinor } from "../../../packages/types";
+import { BILLING_ENABLED, formatMoney, toMinor } from "../../../packages/types";
 import { CampusError, campusDomainOrNull, campusOf, flagIfAcademic, hasCampus, requireUser } from "./campusService";
 import { logEvent, requireWriter } from "./dealService";
 import { gigDto } from "./gigService";
@@ -79,7 +79,9 @@ export async function createKit(userId: string, input: { workspaceId?: string | 
         const plan = await planFor(workspaceId);
         const [open] = await db.select({ n: count() }).from(kits).where(and(eq(kits.workspaceId, workspaceId), eq(kits.status, "open")));
         if (Number(open?.n ?? 0) >= plan.openKits) {
-            throw new CampusError(400, `The ${plan.name} plan allows ${plan.openKits} open kits. Close one or upgrade.`, { upgrade: true });
+            throw BILLING_ENABLED
+                ? new CampusError(400, `The ${plan.name} plan allows ${plan.openKits} open kits. Close one or upgrade.`, { upgrade: true })
+                : new CampusError(400, `A workspace can have up to ${plan.openKits} open kits for now. Close one first.`);
         }
     } else {
         const [open] = await db.select({ n: count() }).from(kits).where(and(eq(kits.ownerId, owner.id), eq(kits.status, "open"), isNull(kits.workspaceId)));
@@ -218,7 +220,9 @@ export async function addNeed(userId: string, kitId: string, input: { title: str
     const plan = kit.workspaceId ? await planFor(kit.workspaceId) : null;
     const limit = plan ? plan.needsPerKit : MAX_NEEDS;
     if (Number(existing?.n ?? 0) >= limit) {
-        throw new CampusError(400, plan ? `The ${plan.name} plan allows ${limit} needs per kit. Upgrade for more.` : `A personal kit holds up to ${limit} needs`, plan ? { upgrade: true } : undefined);
+        throw new CampusError(400, plan
+            ? (BILLING_ENABLED ? `The ${plan.name} plan allows ${limit} needs per kit. Upgrade for more.` : `A workspace kit holds up to ${limit} needs for now`)
+            : `A personal kit holds up to ${limit} needs`, plan && BILLING_ENABLED ? { upgrade: true } : undefined);
     }
     const [gig] = await db.insert(gigs).values({
         authorId: owner.id,

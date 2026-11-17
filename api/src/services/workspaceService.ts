@@ -4,7 +4,7 @@
  * payment gateway account: an owner requests an upgrade, an admin activates it (MEMORY.md, 2026-11-17).
  */
 import { and, count, db, desc, eq, gt, inArray, kits, subscriptions, users, workspaceMembers, workspaces } from "../../../packages/db/index";
-import { PLANS, formatMoney, toMinor, type PlanId } from "../../../packages/types";
+import { BILLING_ENABLED, LAUNCH_PLAN, PLANS, formatMoney, toMinor, type PlanId } from "../../../packages/types";
 import { CampusError, requireUser } from "./campusService";
 import { logEvent, notifyUser, requireWriter } from "./dealService";
 
@@ -14,6 +14,8 @@ type WorkspaceRow = typeof workspaces.$inferSelect;
 
 /** The plan a workspace is on right now: the newest active, unexpired subscription, else Free. */
 export async function planFor(workspaceId: string) {
+    // While billing is off, everyone gets the launch plan and nothing is read from subscriptions.
+    if (!BILLING_ENABLED) return { id: "free" as PlanId, ...LAUNCH_PLAN, periodEnd: null as Date | null };
     const [sub] = await db.select().from(subscriptions).where(and(
         eq(subscriptions.workspaceId, workspaceId),
         eq(subscriptions.status, "active"),
@@ -117,7 +119,9 @@ export async function addMember(userId: string, workspaceId: string, handle: str
     const plan = await planFor(ws.id);
     const [members] = await db.select({ n: count() }).from(workspaceMembers).where(eq(workspaceMembers.workspaceId, ws.id));
     if (Number(members?.n ?? 0) >= plan.members) {
-        throw new CampusError(400, `The ${plan.name} plan allows ${plan.members} members. Upgrade to add more.`, { upgrade: true });
+        throw BILLING_ENABLED
+            ? new CampusError(400, `The ${plan.name} plan allows ${plan.members} members. Upgrade to add more.`, { upgrade: true })
+            : new CampusError(400, `A workspace can have up to ${plan.members} members for now.`);
     }
     const [person] = await db.select().from(users).where(eq(users.username, handle.trim().toLowerCase()));
     if (!person || person.suspendedAt) throw new CampusError(404, "No one has that handle");
@@ -141,6 +145,7 @@ export async function removeMember(userId: string, workspaceId: string, memberId
 }
 
 export async function requestUpgrade(userId: string, workspaceId: string, input: { plan: "pro" | "campus"; note?: string }) {
+    if (!BILLING_ENABLED) throw new CampusError(400, "Attest is free for now. There is nothing to pay for.");
     const ws = await mustOwner(userId, workspaceId);
     const [pending] = await db.select({ id: subscriptions.id }).from(subscriptions)
         .where(and(eq(subscriptions.workspaceId, ws.id), eq(subscriptions.status, "requested")));

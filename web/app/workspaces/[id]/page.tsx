@@ -3,7 +3,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { PLANS, formatMoney } from "@embedra/types";
+import { BILLING_ENABLED, PLANS, formatMoney } from "@embedra/types";
 import { useAuth } from "@/lib/auth-context";
 import { CampusApiError, addWorkspaceMember, getWorkspace, removeWorkspaceMember, requestUpgrade, type WorkspaceDetail } from "@/lib/campus-api";
 import PlanMeter from "@/components/campus/PlanMeter";
@@ -78,7 +78,7 @@ export default function WorkspacePage() {
               <div>
                 <p className="serial">Current plan</p>
                 <h2 id="plan-heading" className="font-serif text-[26px] font-semibold text-[#141b2b]">{plan.name}</h2>
-                <p className="text-[13px] text-[#777587]">{plan.id === "free" ? "Free forever" : `Active until ${date(plan.periodEnd)}`}</p>
+                <p className="text-[13px] text-[#777587]">{!BILLING_ENABLED ? "Free while Attest is new" : plan.id === "free" ? "Free forever" : `Active until ${date(plan.periodEnd)}`}</p>
               </div>
               {plan.badge && <Stamp icon="verified" thunk>Verified organiser</Stamp>}
             </div>
@@ -88,7 +88,19 @@ export default function WorkspacePage() {
               <p className="text-[12px] text-[#777587]">Up to {plan.limits.needsPerKit} needs per kit{plan.csvExport ? " · CSV export" : ""}.</p>
             </div>
           </div>
-          {owner && plan.id === "free" && (
+          {!BILLING_ENABLED && (
+            <>
+              <div className="ticket-tear" />
+              <div className="p-5">
+                <p className="flex items-center gap-2 font-semibold text-[#141b2b]">
+                  Pro
+                  <span className="rounded-full border border-dashed border-[#a8a5bd] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#777587]">Coming soon</span>
+                </p>
+                <p className="mt-1 text-[13px] text-[#464555]">Paid plans for bigger teams are on the way. Everything here is free until then, and we&apos;ll tell you well before anything changes.</p>
+              </div>
+            </>
+          )}
+          {BILLING_ENABLED && owner && plan.id === "free" && (
             <>
               <div className="ticket-tear" />
               <div className="p-5 space-y-3">
@@ -174,7 +186,7 @@ export default function WorkspacePage() {
         )}
       </section>
 
-      {owner && data.billing.length > 0 && (
+      {BILLING_ENABLED && owner && data.billing.length > 0 && (
         <section className="ticket p-5" aria-labelledby="billing-heading">
           <h2 id="billing-heading" className="font-serif text-[20px] font-semibold text-[#141b2b]">Billing history</h2>
           <ul className="mt-3 space-y-2 text-[13px]">

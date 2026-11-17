@@ -126,3 +126,11 @@ Research (two reports + targeted searches) says student marketplaces fail for la
 - The MiniLM coursework check is weak (homework 0.40 vs a real study-tool idea 0.42). The keyword check is the real guard; the model flags only scores ≥ 0.5. Revisit with a better zero-shot model if flags miss things.
 - Microsoft (Outlook) sign-in still works only for the Amrita tenant. Everyone else signs in with the email code.
 - Legacy `/auth/signup` and `/auth/login` return 410 so nobody skips academic verification.
+
+## Billing switched off for launch (2026-11-17)
+The founder doesn't want anyone to pay for a while. `BILLING_ENABLED = false` in `packages/types/campus.ts`.
+- Every workspace gets `LAUNCH_PLAN` free: 10 members, 25 open kits, 50 needs per kit, CSV export. No "Verified organiser" stamp, since nobody has been verified or has paid.
+- Pro and Campus show as **Coming soon** with no price, on `/pricing` and on the workspace plan card. Upgrade requests are refused by the API; the admin billing queue and billing history are hidden.
+- **Why:** get real organisers using it first; charging before there is traction, a domain, a gateway and CA advice would only add friction.
+- **How to apply:** don't add prices, upgrade buttons or payment prompts while the switch is off. To turn billing on, set it to true; `PLANS` and the manual flow are unchanged. Give users notice before turning it on.
+

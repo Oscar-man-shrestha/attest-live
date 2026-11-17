@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { BILLING_ENABLED } from "@embedra/types";
 import {
   listReports,
   resolveReport,
@@ -136,7 +137,7 @@ export default function ReportsPage() {
           )}
         </article>
       ))}
-      {token && user?.isAdmin && <BillingQueue token={token} />}
+      {BILLING_ENABLED && token && user?.isAdmin && <BillingQueue token={token} />}
       {token && user?.isAdmin && <IntegrityQueue token={token} />}
     </div>
   );
