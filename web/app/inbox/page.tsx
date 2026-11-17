@@ -117,11 +117,11 @@ export default function InboxPage() {
     <div className="px-5 py-6 max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto space-y-4">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#4f46e5]">Sprint desk</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#4f46e5]">Your desk</p>
           <h1 className="font-serif text-[32px] font-semibold">Inbox</h1>
           <p className="text-[13px] text-[#777587] mt-1">
             Offers, invites, day-7 check-ins, and signatures — ranked so the next useful move is on top.
-            {data.summary.usingModel ? " Fit scores use the campus embedding model." : " Keyword match while the language model is offline."}
+            {data.summary.usingModel ? " Fit scores use Attest's matching model." : " Keyword match while the language model is offline."}
           </p>
         </div>
         {data.summary.unreadNotices > 0 && token && (
@@ -216,7 +216,7 @@ export default function InboxPage() {
           {data.incoming.new.length === 0 && data.incoming.tryout.length === 0 && data.incoming.decided.length === 0 && (
             <EmptyState
               title="No join requests yet"
-              body="When classmates ask to collaborate on your ideas or propose an idea on your problems, they show up here ranked by fit."
+              body="When people ask to collaborate on your ideas or propose an idea on your problems, they show up here ranked by fit."
               actionHref="/ideas/new"
               actionLabel="Post idea"
               secondaryHref="/people"

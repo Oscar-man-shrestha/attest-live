@@ -333,3 +333,5 @@ Organiser need lists. All under `/api/v1/campus`, JWT required.
 |---|---|---|---|
 | PUT | `/campus/me/tip` | `tipUrlSchema` | Set or clear (`""`) the profile tip link. https only, allowlisted tipping hosts |
 | GET | `/campus/people/:id/record` | — | Now also returns `handle`, `tipUrl`, `memberSince`, `verifiedStudent`, `trust` (people helped, work accepted, tasks signed, deals completed, deals dropped) and `history` (up to 40 dated events, newest first) |
+
+`GET /campus/ideas/:id` also returns `ownerTipUrl` (the owner's tip link) for named posts; it is null for hidden-name posts and suspended owners (added 2026-11-17).

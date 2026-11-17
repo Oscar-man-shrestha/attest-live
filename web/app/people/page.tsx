@@ -73,7 +73,7 @@ export default function PeoplePage() {
       )}
 
       <div className="flex gap-1">
-        {SCOPES.map((item) => (
+        {SCOPES.filter((item) => item.value !== "campus" || user?.hasCampus !== false).map((item) => (
           <button
             key={item.value}
             type="button"
@@ -91,7 +91,7 @@ export default function PeoplePage() {
         <EmptyState
           title={scope === "all" ? "You are early" : "Nobody in this filter yet"}
           body={scope === "all"
-            ? "As more classmates finish their profiles, they show up here ranked by shared skills, interests, and branch."
+            ? "As more people finish their profiles, they show up here ranked by shared skills, interests, and branch."
             : "Widen the filter to Everyone, or finish your own profile so matching has more to go on."}
           actionHref={scope === "all" ? "/profile" : undefined}
           actionLabel={scope === "all" ? "Finish your profile" : undefined}

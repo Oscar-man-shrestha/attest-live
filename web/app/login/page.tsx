@@ -237,7 +237,7 @@ function LoginForm() {
             )}
           </div>
           <p className="mt-4 text-center text-[12px] leading-relaxed text-[#777587]">
-            By signing in you agree to the <Link href="/rules" className="font-semibold text-[#141b2b] underline underline-offset-2">house rules</Link>: real projects only, never graded coursework.
+            By signing in you agree to the <Link href="/rules" className="font-semibold text-[#141b2b] underline underline-offset-2">house rules</Link> (real projects only, never graded coursework) and the <Link href="/privacy" className="font-semibold text-[#141b2b] underline underline-offset-2">privacy page</Link>.
             Attest is not affiliated with any university or college.
           </p>
         </div>

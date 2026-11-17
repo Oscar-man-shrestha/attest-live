@@ -98,7 +98,7 @@ export default function ProblemsPage() {
     <div className="px-5 py-6 max-w-3xl xl:max-w-5xl 2xl:max-w-6xl mx-auto space-y-4">
       <div className="flex items-end justify-between gap-3">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#b45309]">Campus pains</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-[#b45309]">Real pains</p>
           <h1 className="font-serif text-[32px] font-semibold">Problems</h1>
           <p className="text-[13px] text-[#777587] mt-1">Pains needing a builder</p>
         </div>

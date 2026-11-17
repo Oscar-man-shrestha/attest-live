@@ -78,7 +78,7 @@ function ProofContent() {
             title="No signed lines yet"
             body={own
               ? "When an idea owner signs your submitted work, it lands here. Join a team and ship a task to earn your first line."
-              : "This student has not shipped signed work in this sprint yet."}
+              : "No signed, shipped work yet."}
             actionHref={own ? "/ideas" : undefined}
             actionLabel={own ? "Find an idea" : undefined}
             secondaryHref={own ? "/inbox" : undefined}

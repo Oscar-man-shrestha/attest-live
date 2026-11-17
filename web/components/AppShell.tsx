@@ -29,7 +29,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isLoading) return;
     const path = pathname || "/";
-    const open = path === "/" || path.startsWith("/login") || path.startsWith("/invite/") || path === "/rules" || path === "/pricing";
+    const open = path === "/" || path.startsWith("/login") || path.startsWith("/invite/") || path === "/rules" || path === "/pricing" || path === "/privacy";
     if (!user && !open) router.replace(`/login?next=${encodeURIComponent(path)}`);
   }, [isLoading, user, pathname, router]);
 

@@ -274,7 +274,7 @@ export default function CampusProfilePage() {
         {profile.twoWeekLine && (
           <Section title="About">
             <p className="text-[14px] text-[#1f2433] whitespace-pre-wrap">{profile.twoWeekLine}</p>
-            <p className="text-[11px] text-[#777587] mt-1">What they can take on in a two-week sprint</p>
+            <p className="text-[11px] text-[#777587] mt-1">What they can take on in the next two weeks</p>
           </Section>
         )}
 

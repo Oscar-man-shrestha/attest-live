@@ -125,7 +125,7 @@ export default function NewProblemPage() {
           <button type="button" className="px-4 py-2 rounded-lg border border-[#e8d9c4] text-[13px] text-[#b45309] hover:bg-[#fffbf5] transition-colors" onClick={async () => {
             if (!token) return;
             const result = await draftText(token, "problem", form.whatHappens || "campus problem");
-            setDraft(result.enabled ? result.draft : (result.message || "Drafting is off for this sprint — write the problem in your own words."));
+            setDraft(result.enabled ? result.draft : (result.message || "Drafting is off — write the problem in your own words."));
           }}>Draft public text</button>
         </div>
       </form>

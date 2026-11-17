@@ -18,6 +18,7 @@ import PostActions from "./PostActions";
 import { Avatar, timeAgo } from "./CommentThread";
 import { useReadTracking } from "@/lib/use-read-tracking";
 import DealBadge from "./DealBadge";
+import { isTipUrl } from "@embedra/types";
 import CampusChips from "./CampusChips";
 
 function seatBadge(idea: SprintIdea) {
@@ -144,6 +145,19 @@ export default function SprintIdeaView({ ideaId }: { ideaId: string }) {
               First published {new Date(published).toLocaleString()} · {timeAgo(idea.createdAt)}
             </p>
           </div>
+          {idea.ownerTipUrl && isTipUrl(idea.ownerTipUrl) && (
+            <a
+              href={idea.ownerTipUrl}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              title="A voluntary thank-you for the idea. It goes straight to them; Attest never handles money."
+              className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-xl bg-[#f59e0b] px-3 py-2 text-[12px] font-semibold text-[#1c1917] shadow-[3px_3px_0_0_#141b2b] transition-all hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_0_#141b2b]"
+            >
+              <span className="material-symbols-outlined text-[16px]" aria-hidden>local_cafe</span>
+              <span className="hidden sm:inline">Thank them with a coffee</span>
+              <span className="sm:hidden">Coffee</span>
+            </a>
+          )}
         </div>
         <h1 className="font-serif text-[36px] sm:text-[42px] font-semibold leading-[1.15] tracking-tight text-[#141b2b]">{idea.title}</h1>
         {idea.problemSource && (

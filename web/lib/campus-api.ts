@@ -59,6 +59,7 @@ export type SprintIdea = {
   isMember?: boolean;
   engagement?: Engagement;
   teamMax?: number;
+  ownerTipUrl?: string | null;
   campusOnly?: boolean;
   sameCampus?: boolean;
   dealType?: string;

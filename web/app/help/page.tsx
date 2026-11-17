@@ -8,7 +8,7 @@ import { getHelp } from "@/lib/campus-api";
 const PATH = [
   { n: "1", title: "Finish your profile", body: "Name, branch, interests, skills, and a two-week line. Cover and projects help owners decide faster.", href: "/profile", label: "Edit profile" },
   { n: "2", title: "Post an idea or report a problem", body: "Ideas seek teammates. Problems name a real pain for someone else to own. Different boards, different accents.", href: "/ideas/new", label: "Post idea", secondaryHref: "/problems/new", secondaryLabel: "Report a problem" },
-  { n: "3", title: "Find people and apply", body: "People ranks classmates by skills and circle. Ask with a structured offer — skills, phases, hours — not a free dump of their secrets.", href: "/people", label: "Open People" },
+  { n: "3", title: "Find people and apply", body: "People ranks other builders by skills and shared interests. Ask with a structured offer — skills, phases, hours — not a free dump of their secrets.", href: "/people", label: "Open People" },
   { n: "4", title: "Decide in Inbox", body: "Fit-ranked requests, day-7 check-ins, and signatures to approve all land in Inbox.", href: "/inbox", label: "Open inbox" },
   { n: "5", title: "Ship and get signed", body: "Workspace tasks → submit → owner signs. Signed lines land on your proof page.", href: "/proof", label: "Open proof" },
 ];

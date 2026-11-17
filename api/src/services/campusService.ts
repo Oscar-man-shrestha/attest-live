@@ -816,6 +816,12 @@ export async function getIdea(userId: string, ideaId: string) {
     const collaborators = await activeCollaborators(idea.id);
     const seatsOpen = idea.teamStatus === "open" && collaborators < MAX_COLLABORATORS;
     const images = await listIdeaImages(idea.id);
+    // "Buy them a coffee": only for named posts, so a hidden-name owner is never revealed through their tip page.
+    let ownerTipUrl: string | null = null;
+    if (!idea.hideName && idea.ownerId !== viewer.id) {
+        const [owner] = await db.select({ tipUrl: users.tipUrl, suspendedAt: users.suspendedAt }).from(users).where(eq(users.id, idea.ownerId));
+        ownerTipUrl = owner && !owner.suspendedAt ? owner.tipUrl : null;
+    }
     const card = {
         ...publicIdea(idea, saved.has(idea.id), problemTitle, forks.get(idea.id) ?? 0, { viewerIsMember: member, viewerCampus: campusOf(viewer) }),
         problemSource,
@@ -825,6 +831,7 @@ export async function getIdea(userId: string, ideaId: string) {
         collaboratorCount: collaborators,
         publishedAt: idea.createdAt,
         images,
+        ownerTipUrl,
     };
     return { idea: card };
 }

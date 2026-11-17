@@ -256,7 +256,7 @@ function IdeasBoardInner() {
               title={branch || semester || q ? "No ideas match these filters" : "No sprint ideas posted yet"}
               body={branch || semester || q
                 ? "Clear your filters or post the first brief for this branch."
-                : "Post a 14-day brief with what you need. Classmates can Ask to join or Start my version."}
+                : "Post a brief with what you need. Builders can Ask to join or Start my version."}
               onAction={branch || semester || q ? () => { setBranch(""); setSemester(""); setQ(""); } : undefined}
               actionLabel={branch || semester || q ? "Reset filters" : "Post an idea"}
               actionHref={!(branch || semester || q) ? "/ideas/new" : undefined}

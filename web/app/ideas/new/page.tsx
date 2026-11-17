@@ -483,7 +483,7 @@ export default function NewSprintIdeaPage() {
                 return;
               }
               const result = await draftText(token, "idea", form.pitch);
-              setDraftNote(result.enabled ? result.draft : (result.message || "Drafting is off for this sprint — write the pitch in your own words."));
+              setDraftNote(result.enabled ? result.draft : (result.message || "Drafting is off — write the pitch in your own words."));
             }}
           >
             Draft public text

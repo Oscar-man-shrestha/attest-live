@@ -331,11 +331,11 @@ export default function WorkPage() {
 
   const handleLeave = async () => {
     if (!token || !id) return;
-    if (!confirm("Are you sure you want to leave this sprint team? Your submitted tasks will remain frozen.")) return;
+    if (!confirm("Are you sure you want to leave this team? Your submitted tasks will remain frozen.")) return;
     setBusyAction("leave");
     try {
       await leaveTeam(token, id);
-      setNotice("You left the sprint team.");
+      setNotice("You left the team.");
       setTimeout(() => {
         window.location.href = "/ideas";
       }, 1500);
@@ -347,7 +347,7 @@ export default function WorkPage() {
 
   const handleShip = async () => {
     if (!token || !id) return;
-    if (!confirm("Ready to ship? This marks the sprint as completed and ready for proof publishing.")) return;
+    if (!confirm("Ready to ship? This marks the build as shipped and ready for proof publishing.")) return;
     setBusyAction("ship");
     try {
       await shipIdea(token, id);
@@ -441,7 +441,7 @@ export default function WorkPage() {
                 </span>
               </div>
               <p className="text-[13px] text-[#464555]">
-                The sprint has passed Day 7. Submit your done, stuck, and next lines below to keep your seat active. Unchecked roles are reopened to the campus community.
+                It has been a week. Submit your done, stuck, and next lines below to keep your seat. Roles with no check-in are reopened to others.
               </p>
               <div className="pt-2">
                 <a
@@ -468,7 +468,7 @@ export default function WorkPage() {
       {isViewerReopened && (
         <div className="rounded-xl border border-[#f5c2c0] bg-[#fff8f7] p-3 text-[13px] text-[#ba1a1a]">
           ⚠️ {work.isAuthor
-            ? "Your check-in is pending. Submit your done, stuck, and next lines below so teammates know where the sprint stands."
+            ? "Your check-in is pending. Submit your done, stuck, and next lines below so teammates know where things stand."
             : "Your seat was marked as reopened because the Day-7 check-in was missed. You can still save your check-in below to update your status."}
         </div>
       )}
@@ -568,7 +568,7 @@ export default function WorkPage() {
             <p className="text-[14px] text-[#464555] font-medium">You don't have an active task right now.</p>
             <p className="text-[12px] text-[#777587]">
               {work.isAuthor
-                ? "Start the sprint by creating a small first task. Assign it to yourself or a teammate, then agree on what can be shown in two weeks."
+                ? "Start by creating a small first task. Assign it to yourself or a teammate, then agree on what can be shown in two weeks."
                 : "Check the task list below or ask the idea author to assign your first task."}
             </p>
             {work.isAuthor && (
@@ -786,7 +786,7 @@ export default function WorkPage() {
         {/* Invite Form Accordion */}
         {showInviteModal && work.isAuthor && (
           <form onSubmit={handleInvite} className="bg-[#f1f3ff] rounded-xl p-3.5 space-y-2 border border-[#c7c4d8]">
-            <p className="font-semibold text-[13px] text-[#141b2b]">Invite a classmate to join this sprint</p>
+            <p className="font-semibold text-[13px] text-[#141b2b]">Invite someone to join this team</p>
             <div className="flex gap-2">
               <input
                 value={inviteEmail}
@@ -971,7 +971,7 @@ export default function WorkPage() {
                 📋
               </span>
               <h2 className="font-semibold text-[16px] text-[#141b2b]">
-                Sprint Tasks ({work.tasks.length})
+                Tasks ({work.tasks.length})
               </h2>
             </div>
             <p className="text-[12px] text-[#777587] mt-0.5">
@@ -1292,7 +1292,7 @@ export default function WorkPage() {
       {work.isAuthor && work.idea.teamStatus !== "shipped" && (
         <section className="rounded-2xl border border-[#c7c4d8] bg-[#f9f9ff] p-5 text-center space-y-3">
           <h2 className="font-serif text-[20px] font-semibold text-[#141b2b]">
-            Ready to Complete Sprint?
+            Ready to ship?
           </h2>
           <p className="text-[13px] text-[#464555] max-w-md mx-auto">
             Marking this idea as shipped closes new tasks and allows all active teammates to feature signed proof on their public profile.

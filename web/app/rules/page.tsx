@@ -115,7 +115,7 @@ export default function RulesPage() {
           </p>
         </div>
         <p className="mt-4 text-[12px] leading-relaxed text-[#777587]">
-          These rules are a plain-language summary and may change as Attest grows. <Link href="/pricing" className="font-semibold text-[#141b2b] underline underline-offset-2">Plans</Link>: students never pay.
+          These rules are a plain-language summary and may change as Attest grows. <Link href="/pricing" className="font-semibold text-[#141b2b] underline underline-offset-2">Plans</Link>: students never pay. <Link href="/privacy" className="font-semibold text-[#141b2b] underline underline-offset-2">Privacy</Link>.
         </p>
         <Link href="/login" className="mt-5 inline-flex rounded-xl bg-[#141b2b] px-5 py-3 text-[14px] font-semibold text-white">Sign in</Link>
       </article>
