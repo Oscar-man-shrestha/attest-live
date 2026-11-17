@@ -8,6 +8,11 @@ import {
     createEngagementSchema,
     createGigSchema,
     createKitSchema,
+    createWorkspaceSchema,
+    addWorkspaceMemberSchema,
+    removeWorkspaceMemberSchema,
+    requestUpgradeSchema,
+    approveSubscriptionSchema,
     kitListQuerySchema,
     kitNeedSchema,
     cursorQuerySchema,
@@ -28,6 +33,7 @@ import { CampusError } from "../services/campusService";
 import * as deals from "../services/dealService";
 import * as gigs from "../services/gigService";
 import * as kitService from "../services/kitService";
+import * as workspaceService from "../services/workspaceService";
 import * as social from "../services/social";
 import * as teamThread from "../services/teamThreadService";
 
@@ -107,6 +113,31 @@ export const createKit = handle(createKitSchema, "body", (userId, _id, input) =>
 export const getKit = handle(null, "body", (userId, id) => kitService.getKit(userId, id));
 export const addKitNeed = handle(kitNeedSchema, "body", (userId, id, input) => kitService.addNeed(userId, id, input));
 export const closeKit = handle(null, "body", (userId, id) => kitService.closeKit(userId, id));
+
+// Workspaces (SaaS: organiser teams with a plan)
+export const listWorkspaces = handle(null, "body", (userId) => workspaceService.listMyWorkspaces(userId));
+export const createWorkspace = handle(createWorkspaceSchema, "body", (userId, _id, input) => workspaceService.createWorkspace(userId, input));
+export const getWorkspace = handle(null, "body", (userId, id) => workspaceService.getWorkspace(userId, id));
+export const addWorkspaceMember = handle(addWorkspaceMemberSchema, "body", (userId, id, input) => workspaceService.addMember(userId, id, input.handle));
+export const removeWorkspaceMember = handle(removeWorkspaceMemberSchema, "body", (userId, id, input) => workspaceService.removeMember(userId, id, input.userId));
+export const requestUpgrade = handle(requestUpgradeSchema, "body", (userId, id, input) => workspaceService.requestUpgrade(userId, id, input));
+export const billingQueue = handle(null, "body", (userId) => workspaceService.billingQueue(userId));
+export const approveSubscription = handle(approveSubscriptionSchema, "body", (userId, id, input) => workspaceService.approveSubscription(userId, id, input));
+export const cancelSubscription = handle(null, "body", (userId, id) => workspaceService.cancelSubscription(userId, id));
+
+/** CSV download of a kit's needs (paid plans). */
+export async function exportKit(req: AuthenticatedRequest, res: Response) {
+    const parsed = idSchema.safeParse(req.params.id);
+    if (!parsed.success) return res.status(404).json({ error: "Not found" });
+    try {
+        const { filename, csv } = await kitService.exportKitCsv(req.user!.userId, parsed.data);
+        res.setHeader("Content-Type", "text/csv; charset=utf-8");
+        res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+        return res.send(csv);
+    } catch (error) {
+        return sendError(res, error);
+    }
+}
 
 // Milestones
 export const submitMilestone = handle(submitMilestoneSchema, "body", (userId, id, input) => deals.submitMilestone(userId, id, input));

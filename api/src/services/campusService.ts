@@ -1775,34 +1775,29 @@ export async function markAllNoticesRead(userId: string) {
 }
 
 export async function inboxBadge(userId: string) {
-    const viewer = await requireUser(userId);
-    const ownedIdeaIds = (await db.select({ id: ideas.id }).from(ideas).where(eq(ideas.ownerId, viewer.id))).map((r) => r.id);
-    const ownedProblemIds = (await db.select({ id: problems.id }).from(problems).where(eq(problems.authorId, viewer.id))).map((r) => r.id);
-    const [unreadRow] = await db.select({ n: count() }).from(notices)
-        .where(and(eq(notices.userId, viewer.id), isNull(notices.readAt)));
-    let pendingOffers = 0;
-    if (ownedIdeaIds.length || ownedProblemIds.length) {
-        const [row] = await db.select({ n: count() }).from(offers).where(and(
-            or(
-                ownedIdeaIds.length ? inArray(offers.ideaId, ownedIdeaIds) : sql`false`,
-                ownedProblemIds.length ? inArray(offers.problemId, ownedProblemIds) : sql`false`,
-            )!,
-            inArray(offers.status, ["new", "tryout"]),
-        ));
-        pendingOffers = Number(row?.n ?? 0);
-    }
-    const [pendingInviteRow] = await db.select({ n: count() }).from(sprintInvites)
-        .where(and(eq(sprintInvites.email, viewer.email), eq(sprintInvites.status, "pending")));
-    let awaitingSignature = 0;
-    if (ownedIdeaIds.length) {
-        const [row] = await db.select({ n: count() }).from(tasks).where(and(
-            inArray(tasks.ideaId, ownedIdeaIds),
-            eq(tasks.receiptStatus, "submitted"),
-        ));
-        awaitingSignature = Number(row?.n ?? 0);
-    }
-    const unreadNotices = Number(unreadRow?.n ?? 0);
-    const pendingInvites = Number(pendingInviteRow?.n ?? 0);
+    // One round trip: this runs on every page load, so it must stay fast on slow links.
+    const result = await db.execute(sql`
+        select
+            (select count(*) from notices n
+                where n.user_id = u.id and n.read_at is null) as unread_notices,
+            (select count(*) from offers o
+                where o.status in ('new', 'tryout')
+                  and (o.idea_id in (select i.id from ideas i where i.owner_id = u.id)
+                    or o.problem_id in (select p.id from problems p where p.author_id = u.id))) as pending_offers,
+            (select count(*) from sprint_invites si
+                where si.email = u.email and si.status = 'pending') as pending_invites,
+            (select count(*) from tasks t
+                where t.receipt_status = 'submitted'
+                  and t.idea_id in (select i.id from ideas i where i.owner_id = u.id)) as awaiting_signature
+        from users u
+        where u.id = ${userId}
+    `);
+    const row = result.rows[0] as Record<string, string | number> | undefined;
+    if (!row) throw new CampusError(401, "Unauthorized");
+    const unreadNotices = Number(row.unread_notices ?? 0);
+    const pendingOffers = Number(row.pending_offers ?? 0);
+    const pendingInvites = Number(row.pending_invites ?? 0);
+    const awaitingSignature = Number(row.awaiting_signature ?? 0);
     const total = unreadNotices + pendingOffers + pendingInvites + awaitingSignature;
     return { count: total, unreadNotices, pendingOffers, pendingInvites, awaitingSignature };
 }

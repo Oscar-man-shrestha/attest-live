@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { CURRENCIES, GIG_CATEGORIES, KIT_KIND_LABELS } from "@embedra/types";
 import { useAuth } from "@/lib/auth-context";
-import { CampusApiError, addKitNeed, closeKit, getKit, type KitDetail, type KitNeed } from "@/lib/campus-api";
+import { CampusApiError, addKitNeed, closeKit, downloadKitCsv, getKit, type KitDetail, type KitNeed } from "@/lib/campus-api";
 import CampusChips from "@/components/campus/CampusChips";
 import Stamp from "@/components/brand/Stamp";
 
@@ -99,7 +99,8 @@ export default function KitPage() {
           <h1 className="mt-2 font-serif text-[30px] font-semibold leading-tight tracking-tight text-[#141b2b]">{kit.name}</h1>
           {kit.description && <p className="mt-2 text-[14px] text-[#464555]">{kit.description}</p>}
           <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            <span className="text-[13px] text-[#777587]">Organised by @{kit.owner.handle}</span>
+            <span className="text-[13px] text-[#777587]">Organised by {kit.workspace ? <span className="font-semibold text-[#141b2b]">{kit.workspace.name}</span> : <>@{kit.owner.handle}</>}</span>
+            {kit.workspace?.verified && <Stamp flat icon="verified">Verified organiser</Stamp>}
             <CampusChips sameCampus={kit.sameCampus} campusOnly={kit.campusOnly} />
             {!open && <span className="rounded-full bg-[#f5f5f4] px-2 py-0.5 text-[11px] font-semibold text-[#57534e]">Closed</span>}
           </div>
@@ -135,9 +136,18 @@ export default function KitPage() {
             <span className="material-symbols-outlined text-[18px]" aria-hidden>{adding ? "close" : "add"}</span>
             {adding ? "Cancel" : "Add a need"}
           </button>
-          <button type="button" onClick={async () => { if (!token) return; await closeKit(token, kit.id); load(); }} className="text-[12px] text-[#777587] hover:text-[#ba1a1a]">
-            Close this kit
-          </button>
+          <div className="flex items-center gap-3">
+            {data.limits?.csvExport ? (
+              <button type="button" onClick={async () => { if (!token) return; try { await downloadKitCsv(token, kit.id); } catch (err) { setError(err instanceof CampusApiError ? err.message : "Export failed"); } }} className="inline-flex items-center gap-1 text-[12px] font-semibold text-[#047857]">
+                <span className="material-symbols-outlined text-[16px]" aria-hidden>download</span>Export CSV
+              </button>
+            ) : kit.workspace ? (
+              <Link href={`/workspaces/${kit.workspace.id}`} className="text-[12px] font-semibold text-[#4f46e5]">CSV export is on Pro</Link>
+            ) : null}
+            <button type="button" onClick={async () => { if (!token) return; await closeKit(token, kit.id); load(); }} className="text-[12px] text-[#777587] hover:text-[#ba1a1a]">
+              Close this kit
+            </button>
+          </div>
         </div>
       )}
 
@@ -200,6 +210,7 @@ export default function KitPage() {
             <div className="flex flex-wrap items-center justify-between gap-2 text-[12px]">
               <span className="text-[#777587]">
                 {need.builderHandle ? <>Builder: <span className="font-semibold text-[#141b2b]">@{need.builderHandle}</span></> : need.stage === "open" ? "Waiting for builders" : ""}
+                {need.managedBy && kit.workspace ? <span className="ml-2 text-[#a3a1b3]">· added by @{need.managedBy}</span> : null}
               </span>
               {kit.mine ? (
                 need.engagementId ? <Link href={`/deals/${need.engagementId}`} className="font-semibold text-[#047857]">Open the deal →</Link>

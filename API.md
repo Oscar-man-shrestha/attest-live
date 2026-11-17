@@ -335,3 +335,22 @@ Organiser need lists. All under `/api/v1/campus`, JWT required.
 | GET | `/campus/people/:id/record` | — | Now also returns `handle`, `tipUrl`, `memberSince`, `verifiedStudent`, `trust` (people helped, work accepted, tasks signed, deals completed, deals dropped) and `history` (up to 40 dated events, newest first) |
 
 `GET /campus/ideas/:id` also returns `ownerTipUrl` (the owner's tip link) for named posts; it is null for hidden-name posts and suspended owners (added 2026-11-17).
+
+## Workspaces and plans (added 2026-11-17)
+
+Organiser teams that run Kits together. Students never pay; only a workspace can be on a paid plan. Plans and limits live in `PLANS` in `packages/types/campus.ts`. Attest takes no card payments: an owner requests an upgrade, an admin arranges payment and an invoice outside Attest, then activates the plan. All under `/api/v1/campus`, JWT required.
+
+| Method | Path | Zod in | Notes |
+|---|---|---|---|
+| GET | `/workspaces` | — | Workspaces the viewer belongs to, with plan and role |
+| POST | `/workspaces` | `createWorkspaceSchema` | Creator becomes owner. Max 3 owned workspaces |
+| GET | `/workspaces/:id` | — | Members only. Plan, usage against limits, members, kits (max 50). `billing` history is owner-only |
+| POST | `/workspaces/:id/members` | `addWorkspaceMemberSchema` | Owner only. Adds by handle; 400 with `upgrade: true` at the plan's member cap |
+| POST | `/workspaces/:id/members/remove` | `removeWorkspaceMemberSchema` | Owner removes anyone but themself; a member can remove themself (leave) |
+| POST | `/workspaces/:id/upgrade` | `requestUpgradeSchema` | Owner only. One pending request at a time; notifies admins |
+| GET | `/kits/:id/export.csv` | — | Kit managers only. 402 unless the workspace plan includes CSV export. Cells are quoted and formula-neutralised |
+| GET | `/admin/billing` | — | Admin only. Pending requests and active plans |
+| POST | `/admin/billing/:id/approve` | `approveSubscriptionSchema` | Admin only. Activates (or extends) for `months`, from the later of now and the current end; notifies the owner |
+| POST | `/admin/billing/:id/cancel` | — | Admin only. Declines a request or ends a plan |
+
+Kit changes: `POST /kits` accepts `workspaceId` (member only; the workspace plan's open-kit limit applies instead of the personal 5). Workspace members can add needs and close the workspace's kits. `GET /kits/:id` adds `workspace {id, name, verified}`, `canManage`, `limits {needs, plan, csvExport}`, and `managedBy` on each need for managers.

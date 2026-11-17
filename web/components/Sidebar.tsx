@@ -36,6 +36,7 @@ export default function Sidebar() {
     { id: "problems", label: "Problems", icon: "flag", href: "/problems", hint: "Pains needing a builder" },
     { id: "gigs", label: "Gigs", icon: "bolt", href: "/gigs", authRequired: true, hint: "Quick paid or credit work" },
     { id: "kits", label: "Kits", icon: "checklist", href: "/kits", authRequired: true, hint: "Fest and club need lists" },
+    { id: "workspaces", label: "Workspaces", icon: "corporate_fare", href: "/workspaces", authRequired: true, hint: "Your team, plan and billing" },
     { id: "saved", label: "Saved", icon: "bookmark", href: "/saved", authRequired: true },
     { id: "deals", label: "Deals", icon: "handshake", href: "/deals", authRequired: true, hint: "Milestones and payments" },
     { id: "inbox", label: "Inbox", icon: "inbox", href: "/inbox" },
@@ -99,7 +100,7 @@ export default function Sidebar() {
                 ? active
                   ? "bg-[#fff7ed] text-[#b45309] font-semibold shadow-[inset_2px_0_0_0_#b45309]"
                   : "text-on-surface-variant hover:bg-[#fffbf5] hover:text-[#b45309]"
-                : item.id === "gigs" || item.id === "deals" || item.id === "kits"
+                : item.id === "gigs" || item.id === "deals" || item.id === "kits" || item.id === "workspaces"
                   ? active
                     ? "bg-[#ecfdf5] text-[#047857] font-semibold shadow-[inset_2px_0_0_0_#047857]"
                     : "text-on-surface-variant hover:bg-[#f0fdf4] hover:text-[#047857]"

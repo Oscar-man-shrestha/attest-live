@@ -98,6 +98,18 @@ router.get("/kits/:id", deals.getKit);
 router.post("/kits/:id/needs", deals.addKitNeed);
 router.post("/kits/:id/close", deals.closeKit);
 
+// Workspaces and billing (SaaS)
+router.get("/workspaces", deals.listWorkspaces);
+router.post("/workspaces", deals.createWorkspace);
+router.get("/workspaces/:id", deals.getWorkspace);
+router.post("/workspaces/:id/members", deals.addWorkspaceMember);
+router.post("/workspaces/:id/members/remove", deals.removeWorkspaceMember);
+router.post("/workspaces/:id/upgrade", deals.requestUpgrade);
+router.get("/kits/:id/export.csv", deals.exportKit);
+router.get("/admin/billing", deals.billingQueue);
+router.post("/admin/billing/:id/approve", deals.approveSubscription);
+router.post("/admin/billing/:id/cancel", deals.cancelSubscription);
+
 // Account settings
 router.put("/me/handle", deals.setHandle);
 router.post("/me/adult", deals.confirmAdult);

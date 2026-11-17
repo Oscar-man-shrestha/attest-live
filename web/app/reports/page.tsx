@@ -9,6 +9,10 @@ import {
   listIntegrityFlags,
   resolveIntegrityFlag,
   unsuspendPerson,
+  getBillingQueue,
+  approveSubscription,
+  cancelSubscription,
+  type BillingRequest,
   CampusApiError,
   type IntegrityFlag,
   type SuspensionAppeal,
@@ -132,6 +136,7 @@ export default function ReportsPage() {
           )}
         </article>
       ))}
+      {token && user?.isAdmin && <BillingQueue token={token} />}
       {token && user?.isAdmin && <IntegrityQueue token={token} />}
     </div>
   );
@@ -203,6 +208,61 @@ function IntegrityQueue({ token }: { token: string }) {
           {a.suspendedReason && <p className="text-[12px] text-[#777587]">Suspended for: {a.suspendedReason}</p>}
           <p className="text-[13px] text-[#464555] whitespace-pre-wrap">{a.suspensionAppeal}</p>
           <button type="button" disabled={busy === a.id} onClick={() => run(a.id, () => unsuspendPerson(token, a.id))} className="h-8 px-3 rounded-lg bg-[#4f46e5] text-white text-[12px] font-medium">Lift suspension</button>
+        </article>
+      ))}
+    </section>
+  );
+}
+
+/** Plan requests from workspace owners. Billing is manual: arrange payment and an invoice, then activate. */
+function BillingQueue({ token }: { token: string }) {
+  const [rows, setRows] = useState<BillingRequest[]>([]);
+  const [months, setMonths] = useState<Record<string, number>>({});
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const load = () => {
+    getBillingQueue(token).then((r) => setRows(r.requests)).catch((err) => setError(err instanceof CampusApiError ? err.message : "Could not load billing"));
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(load, [token]);
+
+  const run = async (key: string, action: () => Promise<unknown>) => {
+    setBusy(key);
+    setError(null);
+    try { await action(); load(); } catch (err) { setError(err instanceof CampusApiError ? err.message : "That didn't work"); } finally { setBusy(null); }
+  };
+
+  return (
+    <section className="space-y-3" aria-labelledby="billing-heading">
+      <div>
+        <h2 id="billing-heading" className="font-serif text-[24px] font-semibold text-[#16161d]">Billing</h2>
+        <p className="text-[13px] text-[#464555]">Plan requests from workspace owners. Email them to arrange payment and an invoice outside Attest, then activate the plan here.</p>
+      </div>
+      {error && <p className="text-[13px] text-[#ba1a1a]">{error}</p>}
+      {rows.length === 0 && <p className="text-[13px] text-[#777587]">No plan requests.</p>}
+      {rows.map((r) => (
+        <article key={r.id} className={`bg-white rounded-xl p-4 space-y-2 border ${r.status === "requested" ? "border-[#9bd9bd]" : "border-[#e4e1ec]"}`}>
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <span className="text-[14px] font-semibold text-[#16161d]">{r.workspace.name} · <span className="capitalize">{r.plan}</span></span>
+            <span className="text-[11px] text-[#777587]">{r.status}{r.periodEnd ? ` until ${new Date(r.periodEnd).toLocaleDateString()}` : ""} · {new Date(r.createdAt).toLocaleDateString()}</span>
+          </div>
+          <p className="text-[13px] text-[#464555]">
+            @{r.requestedBy.handle} · <a href={`mailto:${r.requestedBy.email}?subject=${encodeURIComponent(`Attest ${r.plan} plan for ${r.workspace.name}`)}`} className="font-semibold text-[#4f46e5] underline">{r.requestedBy.email}</a>
+            {r.amount ? <> · list price <span className="font-semibold">{r.amount}</span></> : null}
+          </p>
+          {r.note && <p className="text-[13px] text-[#464555] bg-[#faf9fc] rounded-lg p-2">“{r.note}”</p>}
+          <div className="flex flex-wrap items-center gap-2">
+            <label className="text-[12px] text-[#464555]">Months
+              <input type="number" min={1} max={24} value={months[r.id] ?? 1} onChange={(e) => setMonths((m) => ({ ...m, [r.id]: Number(e.target.value) || 1 }))} className="ml-1 w-16 rounded border border-[#c7c4d8] px-2 py-1 text-[13px]" />
+            </label>
+            <button type="button" disabled={busy === r.id} onClick={() => run(r.id, () => approveSubscription(token, r.id, months[r.id] ?? 1))} className="h-8 px-3 rounded-lg bg-[#047857] text-white text-[12px] font-medium">
+              {r.status === "active" ? "Extend" : "Payment received — activate"}
+            </button>
+            <button type="button" disabled={busy === r.id} onClick={() => run(r.id, () => cancelSubscription(token, r.id))} className="h-8 px-3 rounded-lg border border-[#c7c5d0] text-[12px] font-medium">
+              {r.status === "active" ? "End plan" : "Decline"}
+            </button>
+          </div>
         </article>
       ))}
     </section>

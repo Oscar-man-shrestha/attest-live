@@ -430,6 +430,39 @@ export const documents = pgTable("documents", {
     byStatus: index("documents_status_created_idx").on(t.status, t.createdAt),
 }));
 
+// ---------- WORKSPACES (SaaS: organiser teams with a plan; see DATA.md) ----------
+export const workspaces = pgTable("workspaces", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    name: text("name").notNull(),
+    kind: text("kind").notNull(),
+    ownerId: uuid("owner_id").notNull().references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const workspaceMembers = pgTable("workspace_members", {
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id),
+    userId: uuid("user_id").notNull().references(() => users.id),
+    role: text("role").default("member").notNull(),
+    joinedAt: timestamp("joined_at").defaultNow().notNull(),
+}, (t) => ({
+    pk: primaryKey({ columns: [t.workspaceId, t.userId] }),
+}));
+
+export const subscriptions = pgTable("subscriptions", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id),
+    plan: text("plan").notNull(),
+    status: text("status").default("requested").notNull(),
+    amountMinor: integer("amount_minor"),
+    currency: text("currency"),
+    periodEnd: timestamp("period_end"),
+    note: text("note"),
+    requestedBy: uuid("requested_by").notNull().references(() => users.id),
+    approvedBy: uuid("approved_by").references(() => users.id),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    approvedAt: timestamp("approved_at"),
+});
+
 // ---------- KITS (organiser need lists; see DATA.md) ----------
 export const kits = pgTable("kits", {
     id: uuid("id").defaultRandom().primaryKey(),
@@ -442,6 +475,7 @@ export const kits = pgTable("kits", {
     campusOnly: boolean("campus_only").default(false).notNull(),
     status: text("status").default("open").notNull(),
     hiddenAt: timestamp("hidden_at"),
+    workspaceId: uuid("workspace_id").references(() => workspaces.id),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

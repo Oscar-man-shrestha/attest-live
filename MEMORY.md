@@ -115,6 +115,13 @@ Research (two reports + targeted searches) says student marketplaces fail for la
 - `pixel_97135` is admin. Contact email is the founder's Gmail, set in `web/.env.local`.
 - Seed/test accounts kept on the founder's choice.
 
+## SaaS: workspaces, plans and manual billing (2026-11-17, founder: "I wanna make it saas")
+1. **Who pays:** organisers (fest teams, clubs, local businesses) pay for a **workspace**. Students never pay and builders keep 0% fees (RULES 16 unchanged).
+2. **Workspaces are organisations.** AGENTS rule 9 ("no organizations-as-entities") is lifted for workspaces only. A workspace has an owner and members (the core team); every member can run the workspace's Kits and sees their totals. Each need's responses and deal stay with the person who added that need.
+3. **Plans** (limits in `packages/types/campus.ts` → `PLANS`): Free (3 members, 5 open kits, 20 needs per kit), Pro (10 members, 25 kits, 50 needs, CSV export, "Verified organiser" badge), Campus (50 members, 100 kits, 100 needs, by arrangement). Prices are placeholders the founder can edit: Pro ₹799/month, Campus by quote.
+4. **Billing is manual for now.** A workspace owner requests an upgrade; an admin activates it after arranging payment and an invoice outside Attest. There is no card checkout and no payment keys, because a payment gateway needs the founder's own KYC. Attest charging for its own service is fine; it still never holds users' money (RULES 13).
+5. When the founder has a gateway account (Razorpay Subscriptions), replace the manual activation with a webhook; the `subscriptions` table already has the fields.
+
 ## Known limits (2026-11-15)
 - The MiniLM coursework check is weak (homework 0.40 vs a real study-tool idea 0.42). The keyword check is the real guard; the model flags only scores ≥ 0.5. Revisit with a better zero-shot model if flags miss things.
 - Microsoft (Outlook) sign-in still works only for the Amrita tenant. Everyone else signs in with the email code.

@@ -1,18 +1,19 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { KIT_KINDS, KIT_KIND_LABELS } from "@embedra/types";
 import { useAuth } from "@/lib/auth-context";
-import { CampusApiError, createKit, listKits, type Kit } from "@/lib/campus-api";
+import { CampusApiError, createKit, listKits, listWorkspaces, type Kit, type WorkspaceSummary } from "@/lib/campus-api";
+import { useSearchParams } from "next/navigation";
 import CampusSwitch, { useCampusScope } from "@/components/campus/CampusSwitch";
 import CampusChips from "@/components/campus/CampusChips";
 import EmptyState from "@/components/campus/EmptyState";
 
 const input = "mt-1 w-full rounded-lg border border-[#c7c4d8] px-3 py-2 text-[14px]";
 
-export default function KitsPage() {
+function KitsPageInner() {
   const { user, token, isLoading } = useAuth();
   const router = useRouter();
   const [tab, setTab] = useState<"all" | "mine">("all");
@@ -27,6 +28,17 @@ export default function KitsPage() {
   const [campusOnly, setCampusOnly] = useState(true);
   const [attest, setAttest] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [myWorkspaces, setMyWorkspaces] = useState<WorkspaceSummary[]>([]);
+  const params = useSearchParams();
+  const [workspaceId, setWorkspaceId] = useState<string>(params.get("workspace") || "");
+
+  useEffect(() => {
+    if (!token) return;
+    listWorkspaces(token).then((r) => setMyWorkspaces(r.workspaces)).catch(() => undefined);
+  }, [token]);
+  useEffect(() => {
+    if (params.get("workspace")) setCreating(true);
+  }, [params]);
 
   useEffect(() => {
     if (!isLoading && !user) router.replace("/login?next=/kits");
@@ -49,6 +61,7 @@ export default function KitsPage() {
     setError(null);
     try {
       const result = await createKit(token, {
+        workspaceId: workspaceId || null,
         name: name.trim(), kind, description: description.trim() || undefined,
         eventDate: eventDate ? new Date(`${eventDate}T09:00:00`).toISOString() : null,
         campusOnly, notAcademicWork: true,
@@ -84,6 +97,15 @@ export default function KitsPage() {
 
       {creating && (
         <form onSubmit={submit} className="ticket p-5 space-y-3 max-w-2xl">
+          {myWorkspaces.length > 0 && (
+            <label className="block text-[12px] font-medium text-[#464555]">Run it from
+              <select value={workspaceId} onChange={(e) => setWorkspaceId(e.target.value)} className={input}>
+                <option value="">Just me (personal kit)</option>
+                {myWorkspaces.map((w) => <option key={w.id} value={w.id}>{w.name} · {w.plan.name}</option>)}
+              </select>
+              <span className="mt-1 block text-[11px] font-normal text-[#777587]">A workspace kit is shared with your whole team.</span>
+            </label>
+          )}
           <label className="block text-[12px] font-medium text-[#464555]">Kit name
             <input value={name} onChange={(e) => setName(e.target.value)} maxLength={80} placeholder="TechFest 2027 — creative and merch" className={input} />
           </label>
@@ -158,5 +180,13 @@ export default function KitsPage() {
         ))}
       </div>
     </div>
+  );
+}
+
+export default function KitsPage() {
+  return (
+    <Suspense fallback={<p className="px-5 py-10 text-[14px] text-[#777587]">Loading…</p>}>
+      <KitsPageInner />
+    </Suspense>
   );
 }

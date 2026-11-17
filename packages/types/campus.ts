@@ -702,6 +702,7 @@ export const gigResponseSchema = z.object({ note: z.string().trim().min(12).max(
 export const KIT_KINDS = ["fest", "club", "business", "other"] as const;
 export const KIT_KIND_LABELS: Record<(typeof KIT_KINDS)[number], string> = { fest: "Fest", club: "Club", business: "Local business", other: "Other" };
 export const createKitSchema = z.object({
+    workspaceId: z.string().uuid().nullable().optional(),
     name: z.string().trim().min(4).max(80),
     kind: z.enum(KIT_KINDS),
     description: z.string().trim().max(600).optional(),
@@ -740,4 +741,31 @@ export function isTipUrl(value: string) {
 }
 export const tipUrlSchema = z.object({
     tipUrl: z.string().trim().max(200).refine((v) => v === "" || isTipUrl(v), "Use an https link from Buy Me a Coffee, Ko-fi, PayPal.me, Razorpay.me, Patreon, GitHub Sponsors, Open Collective or Liberapay"),
+});
+
+// ---------- SaaS: workspaces and plans ----------
+export const PLAN_IDS = ["free", "pro", "campus"] as const;
+export type PlanId = (typeof PLAN_IDS)[number];
+/** Plan limits and placeholder prices. Edit here; the API and the pricing page both read this. */
+export const PLANS: Record<PlanId, { name: string; priceMinor: number | null; currency: string; period: string; members: number; openKits: number; needsPerKit: number; csvExport: boolean; badge: boolean }> = {
+    free: { name: "Free", priceMinor: 0, currency: "INR", period: "forever", members: 3, openKits: 5, needsPerKit: 20, csvExport: false, badge: false },
+    pro: { name: "Pro", priceMinor: 79900, currency: "INR", period: "per month", members: 10, openKits: 25, needsPerKit: 50, csvExport: true, badge: true },
+    campus: { name: "Campus", priceMinor: null, currency: "INR", period: "by arrangement", members: 50, openKits: 100, needsPerKit: 100, csvExport: true, badge: true },
+};
+export const createWorkspaceSchema = z.object({
+    name: z.string().trim().min(3).max(60),
+    kind: z.enum(KIT_KINDS),
+});
+export const addWorkspaceMemberSchema = z.object({
+    handle: z.string().trim().toLowerCase().regex(HANDLE_RE, "Use their Attest handle, like rivet_4821"),
+});
+export const removeWorkspaceMemberSchema = z.object({ userId: z.string().uuid() });
+export const requestUpgradeSchema = z.object({
+    plan: z.enum(["pro", "campus"]),
+    note: z.string().trim().max(500).optional(),
+});
+export const approveSubscriptionSchema = z.object({
+    months: z.number().int().min(1).max(24),
+    amount: z.number().min(0).max(10_000_000).nullable().optional(),
+    note: z.string().trim().max(500).optional(),
 });

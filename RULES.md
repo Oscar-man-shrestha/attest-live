@@ -20,7 +20,7 @@ Agents and humans: break these only with an explicit user decision recorded in M
 13. Attest never holds, pools or routes users' money. Phase 1 payment happens off-platform; Attest only records it.
 14. A paid milestone counts as proof only when both payer and payee confirm the payment.
 15. Paid deal types (`paid_fixed`, `sponsor_stipend`) need both parties to have confirmed they are 18 or older. Under-18s may join unpaid deals only.
-16. Builders pay 0% to Attest. Never add a fee on the student side.
+16. Builders pay 0% to Attest. Never add a fee on the student side. Only workspaces (organisers) can be charged, for their own plan.
 17a. Campus-only posts (`campus_only`) are never shown to another email domain, in any list or detail endpoint.
 17. No graded coursework, exams or assignments for either party. Every post and engagement carries the not-graded-work attestation. Capstones only as disclosed collaboration. Flags go to human review; never auto-ban.
 18. Never store bank account, card or UPI numbers. Payment references are free-text receipts IDs only. A profile tip link must be an https link to an allowlisted tipping service.

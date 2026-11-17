@@ -999,11 +999,13 @@ export type Kit = {
   id: string; name: string; kind: string; description: string | null; eventDate: string | null;
   campusOnly: boolean; sameCampus: boolean; status: "open" | "closed"; createdAt: string;
   owner: { id: string; handle: string }; mine: boolean; needs: number; filled: number;
+  canManage?: boolean; workspace?: { id: string; name: string; verified: boolean } | null;
 };
-export type KitNeed = Gig & { stage: "open" | "closed" | "hired" | "review" | "delivered" | "paid" | "cancelled"; builderHandle: string | null; engagementId: string | null; kitId?: string | null };
+export type KitNeed = Gig & { stage: "open" | "closed" | "hired" | "review" | "delivered" | "paid" | "cancelled"; builderHandle: string | null; engagementId: string | null; kitId?: string | null; managedBy?: string | null };
 export type KitDetail = {
   kit: Kit; needs: KitNeed[];
   totals: { needs: number; open: number; inProgress: number; done: number; budget: string | null; paidConfirmed: string | null };
+  limits?: { needs: number; plan: string | null; csvExport: boolean };
 };
 export function listKits(token: string, params: { campus?: boolean; mine?: boolean; cursor?: string | null }) {
   const q = new URLSearchParams();
@@ -1023,4 +1025,67 @@ export function addKitNeed(token: string, id: string, body: unknown) {
 }
 export function closeKit(token: string, id: string) {
   return request<{ ok: true }>(`/campus/kits/${id}/close`, token, { method: "POST", body: "{}" });
+}
+
+// ---------- SaaS: workspaces, plans, billing ----------
+export type PlanInfo = {
+  id: "free" | "pro" | "campus"; name: string; price: string | null; period: string;
+  limits: { members: number; openKits: number; needsPerKit: number }; csvExport: boolean; badge: boolean; periodEnd: string | null;
+};
+export type WorkspaceSummary = { id: string; name: string; kind: string; role: "owner" | "member"; plan: PlanInfo; members: number };
+export type WorkspaceDetail = {
+  workspace: { id: string; name: string; kind: string; createdAt: string };
+  role: "owner" | "member";
+  plan: PlanInfo;
+  usage: { members: number; openKits: number };
+  members: { userId: string; handle: string; displayName: string | null; role: string; joinedAt: string }[];
+  kits: { id: string; name: string; status: string; createdAt: string }[];
+  billing: { id: string; plan: string; status: string; amount: string | null; periodEnd: string | null; note: string | null; createdAt: string }[];
+  pendingUpgrade: boolean;
+};
+export type BillingRequest = {
+  id: string; status: string; plan: string; workspace: { id: string; name: string };
+  requestedBy: { handle: string; email: string }; amount: string | null; note: string | null; periodEnd: string | null; createdAt: string;
+};
+const postJson = (body?: unknown): RequestInit => ({ method: "POST", body: JSON.stringify(body ?? {}) });
+export function listWorkspaces(token: string) {
+  return request<{ workspaces: WorkspaceSummary[] }>("/campus/workspaces", token);
+}
+export function createWorkspace(token: string, name: string, kind: string) {
+  return request<WorkspaceDetail>("/campus/workspaces", token, postJson({ name, kind }));
+}
+export function getWorkspace(token: string, id: string) {
+  return request<WorkspaceDetail>(`/campus/workspaces/${id}`, token);
+}
+export function addWorkspaceMember(token: string, id: string, handle: string) {
+  return request<WorkspaceDetail>(`/campus/workspaces/${id}/members`, token, postJson({ handle }));
+}
+export function removeWorkspaceMember(token: string, id: string, userId: string) {
+  return request<WorkspaceDetail | { left: true }>(`/campus/workspaces/${id}/members/remove`, token, postJson({ userId }));
+}
+export function requestUpgrade(token: string, id: string, plan: "pro" | "campus", note?: string) {
+  return request<WorkspaceDetail>(`/campus/workspaces/${id}/upgrade`, token, postJson({ plan, note: note || undefined }));
+}
+export function getBillingQueue(token: string) {
+  return request<{ requests: BillingRequest[] }>("/campus/admin/billing", token);
+}
+export function approveSubscription(token: string, id: string, months: number, amount?: number | null, note?: string) {
+  return request<{ ok: true; periodEnd: string }>(`/campus/admin/billing/${id}/approve`, token, postJson({ months, amount: amount ?? null, note: note || undefined }));
+}
+export function cancelSubscription(token: string, id: string) {
+  return request<{ ok: true }>(`/campus/admin/billing/${id}/cancel`, token, postJson());
+}
+/** Downloads a kit's needs as CSV (paid plans). Uses fetch so the auth header goes along. */
+export async function downloadKitCsv(token: string, id: string) {
+  const res = await fetch(`${API_BASE}/campus/kits/${id}/export.csv`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new CampusApiError(data.error || "Export failed", res.status);
+  }
+  const blob = await res.blob();
+  const name = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") || "")?.[1] || "kit.csv";
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = name; a.click();
+  URL.revokeObjectURL(url);
 }

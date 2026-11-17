@@ -628,3 +628,47 @@ At most 5 open kits per owner and 20 needs per kit.
 | tip_url | text, nullable | Optional "buy me a coffee" link. https only, host must be on `TIP_HOSTS` in `packages/types/campus.ts`. Attest never handles the money |
 
 `academic_verifications` rows are written only for university emails.
+
+## SaaS: workspaces and subscriptions (added 2026-11-17)
+
+### workspaces
+An organiser team (fest core team, club, local business) that runs Kits together and holds a plan.
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, PK | |
+| name | text | 3–60 chars |
+| kind | text | `fest`, `club`, `business`, `other` |
+| owner_id | uuid, FK users | Manages members and billing |
+| created_at | timestamp | |
+
+### workspace_members
+| Column | Type | Notes |
+|---|---|---|
+| workspace_id | uuid, FK workspaces | |
+| user_id | uuid, FK users | |
+| role | text | `owner` or `member` |
+| joined_at | timestamp | |
+
+Primary key (workspace_id, user_id). Member count is capped by the plan.
+
+### subscriptions
+| Column | Type | Notes |
+|---|---|---|
+| id | uuid, PK | |
+| workspace_id | uuid, FK workspaces | |
+| plan | text | `pro` or `campus` |
+| status | text | `requested`, `active`, `cancelled` |
+| amount_minor | int, nullable | What was agreed, for the record |
+| currency | text, nullable | |
+| period_end | timestamp, nullable | Plan is active while `status = 'active'` and `period_end > now()` |
+| note | text, nullable | Requester's note or admin's billing note (≤ 500) |
+| requested_by | uuid, FK users | |
+| approved_by | uuid, FK users, nullable | Admin who activated it |
+| created_at, approved_at | timestamp | |
+
+A workspace with no active subscription is on Free.
+
+### kits (added column)
+| Column | Type | Notes |
+|---|---|---|
+| workspace_id | uuid, FK workspaces, nullable | Set when the kit belongs to a workspace; plan limits then apply |

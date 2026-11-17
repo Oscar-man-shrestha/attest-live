@@ -14,6 +14,7 @@ const SECTIONS: { title: string; body: string[] }[] = [
       "If you sign in with a university email, its domain, so we can show the Verified student stamp and your campus. Your university name stays hidden unless you turn it on.",
       "What you post and do here: ideas, problems, gigs, kits, comments, likes, saves, team and deal messages, tasks, milestones, reviews and reports.",
       "Payment records you enter: the method (for example UPI) and a receipt ID. Never an account, card or UPI number.",
+      "If you run a workspace and ask for a paid plan: the plan, the agreed amount and dates. Admins see your handle and email so they can arrange payment and an invoice. Card or bank details are never entered on Attest.",
       "What you open and how long you read, so the feed can suggest better ideas. This stays inside Attest.",
     ],
   },
