@@ -61,8 +61,8 @@ import { deliverMail, enqueueMail, MailDeliveryError } from "./mailQueue";
 import { cosineSimilarity, embedTextsSafe, ideaText, nudgeEmbeddings } from "../queues/embeddingQueue";
 import { nudgeGithubCheck } from "../queues/documentQueue";
 import { checkUserDay7Notices } from "../queues/day7Queue";
+import { jwtSecret } from "../config/jwtSecret";
 
-const JWT_SECRET = process.env.JWT_SECRET || "embedra_super_secret_jwt_key_2026";
 
 export class CampusError extends Error {
     status: number;
@@ -702,7 +702,7 @@ export async function signInCampusEmail(email: string, fullName?: string | null,
 
     const token = jwt.sign(
         { userId: user.id, username: user.username, email: user.email },
-        JWT_SECRET,
+        jwtSecret(),
         { expiresIn: "7d" }
     );
     return { token, user: toPublicUser(user), suggestedBranch: suggestBranch(normalized), guess };

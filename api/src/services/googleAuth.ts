@@ -5,8 +5,8 @@
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { CampusError, signInCampusEmail } from "./campusService";
+import { jwtSecret } from "../config/jwtSecret";
 
-const JWT_SECRET = process.env.JWT_SECRET || "embedra_super_secret_jwt_key_2026";
 const AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const TOKEN_URL = "https://oauth2.googleapis.com/token";
 const ISSUERS = ["https://accounts.google.com", "accounts.google.com"];
@@ -43,7 +43,7 @@ export function googleSignInUrl(next: string | undefined) {
     const { clientId, redirectUri } = config();
     const nonce = crypto.randomBytes(16).toString("hex");
     const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : undefined;
-    const state = jwt.sign({ nonce, next: safeNext, purpose: "google-login" }, JWT_SECRET, { expiresIn: "10m" });
+    const state = jwt.sign({ nonce, next: safeNext, purpose: "google-login" }, jwtSecret(), { expiresIn: "10m" });
     const params = new URLSearchParams({
         client_id: clientId,
         redirect_uri: redirectUri,
@@ -74,7 +74,7 @@ export async function completeGoogleSignIn(code: string, state: string) {
 
     let statePayload: { nonce: string; next?: string; purpose: string };
     try {
-        statePayload = jwt.verify(state, JWT_SECRET) as typeof statePayload;
+        statePayload = jwt.verify(state, jwtSecret()) as typeof statePayload;
     } catch {
         throw new CampusError(401, "The sign-in link expired. Start again.");
     }

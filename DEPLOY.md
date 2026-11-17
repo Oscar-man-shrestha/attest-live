@@ -7,7 +7,8 @@ Work top to bottom. Boxes marked **(you)** need the founder: they involve accoun
 - Admin: `pixel_97135` (founder's Outlook account).
 - Contact email: set in `web/.env.local` (`NEXT_PUBLIC_SUPPORT_EMAIL`).
 - Test data: kept on purpose (7 seed/test accounts).
-- Still open: Resend sending domain (needs a domain you own), lawyer review, first real Kit.
+- Workspaces and plans: built. Billing is manual (see section 7a). Prices are placeholders in `PLANS`, `packages/types/campus.ts`.
+- Still open: Resend sending domain (needs a domain you own), lawyer review, CA advice on invoicing and GST, first real Kit, first paying workspace.
 
 ## 1. Sign-in (nobody can join until one of these works)
 The sign-in page only shows methods that are set up (`GET /api/v1/auth/campus/methods`).
@@ -16,7 +17,7 @@ The sign-in page only shows methods that are set up (`GET /api/v1/auth/campus/me
   `RESEND_API_KEY=…` and `RESEND_FROM=Attest <login@your-domain.com>`. The free `resend.dev` sender is rejected on purpose: it only delivers to your own inbox.
 - [ ] **(you) Google.** Google Cloud Console → APIs & Services → Credentials → Create OAuth client ID → *Web application*.
   Authorized redirect URI: `<web origin>/login/google/callback`. Put the values in `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
-  Only verified university emails are accepted; personal Gmail is refused (MEMORY.md, Google sign-in decision). Set the OAuth consent screen to *External* and publish it, or only test users can sign in.
+  Anyone with a verified Google email can sign in; a university email additionally marks them as a verified student. Set the OAuth consent screen to *External* and publish it, or only test users can sign in.
 - [ ] **(you) Amrita Outlook (optional).** Rotate the Microsoft client secret in Entra (the old value was pasted in a chat) and update `MICROSOFT_CLIENT_SECRET`. The redirect URI registered in Entra must equal `MICROSOFT_REDIRECT_URI` exactly, including the port.
 
 ## 2. Secrets and config
@@ -31,7 +32,7 @@ The sign-in page only shows methods that are set up (`GET /api/v1/auth/campus/me
 - [ ] Start from `api/.env.example`, `web/.env.example`, `packages/db/.env.example`.
 
 ## 3. Database
-Migrations live in `packages/db/migrations`. The app's database role cannot change tables, so run new migration files in the Supabase SQL editor (as `postgres`), in order. Already applied to the `attest` project: `0000`–`0009`.
+Migrations live in `packages/db/migrations`. The app's database role cannot change tables, so run new migration files in the Supabase SQL editor (as `postgres`), in order. Already applied to the `attest` project: `0000`–`0012` (`0012` adds workspaces and subscriptions).
 
 On a fresh Supabase project, also create the `attest_app` role and grant it table access, then run every migration. New tables must have RLS on and no `anon` / `authenticated` grants (see the end of `0007` and `0008`).
 
@@ -57,7 +58,7 @@ Put web and API behind HTTPS. Load balancers can probe `/api/v1/health` (always 
 
 ## 6. Smoke test (two student accounts, ideally on two different university domains)
 1. Logged-out `/` shows the landing page; `/rules` opens without signing in.
-2. Sign in by each method you set up. A personal Gmail is refused with a clear message. Five wrong email codes lock that code.
+2. Sign in by each method you set up, with a university email and with a personal one. Only the university one shows "verified student". Five wrong email codes lock that code.
 3. Finish the profile → `/ideas`. Flip **My campus / Everywhere**.
 4. Post an idea as "Only my campus": the other university can't see it in the list or by link.
 5. Like, "I'd use this", comment, save and remix a card.
@@ -68,19 +69,31 @@ Put web and API behind HTTPS. Load balancers can probe `/api/v1/health` (always 
 10. Suspend and un-suspend a test account as admin; the suspended account can still read and appeal.
 11. Check a hidden-name idea as an unrelated student: no owner name or id is shown.
 12. Open the site on a phone: the bottom bar shows six tabs and nothing scrolls sideways.
+13. Create a workspace, add a teammate by handle, start a Kit from it, then **Request Pro**. As admin, Reports → Billing → **Payment received — activate**. The Kit now shows "Verified organiser" and **Export CSV** downloads.
 
 ## 7. Before you take real money or real users **(you)**
 - [ ] A lawyer reviews: the house rules (`/rules`), the default ownership (IP) terms in deals, Terms of Use and a Privacy Policy (neither exists yet), and whether India's DPDP Act or other privacy laws apply to you.
-- [ ] A CA confirms Attest has no TDS / GST duties while it never touches payments (Phase 1).
+- [ ] A CA confirms Attest has no TDS / GST duties on deals between students, since it never touches that money.
+- [ ] A CA advises on workspace plan revenue: this money **is** yours, so you need proper invoices, and GST registration once you cross the threshold or sell across borders.
 - [ ] Decide how people contact you (support email) and add it to `/rules` and `/help`.
 - [ ] Collect your first 30 real projects by hand before inviting builders (see the research report).
+
+## 7a. Taking payment for workspace plans **(you)**
+Attest has no card checkout. The flow is manual and needs no payment keys:
+1. A workspace owner clicks **Request Pro** (or **Ask about Campus**). Admins get a notice.
+2. In **Reports → Billing** you see the workspace, the owner's email and the list price.
+3. Email them, send an invoice, and take payment by UPI or bank transfer to your own account.
+4. When the money arrives, pick the number of months and click **Payment received — activate**. **Extend** adds months; **End plan** stops it. Plans lapse to Free on their own when the period ends.
+
+To add card checkout later (e.g. Razorpay), you need a payment-gateway account in your own name (KYC), a public website with Terms, Privacy and a refund policy, and a webhook that calls the same activation logic. Do not add it before the CA advice above.
 
 ## 8. What is already in place
 - Any-university sign-in with yearly re-verification; university hidden by default; random handles.
 - Suspended accounts are read-only; admin flags and appeals queue.
 - Rate limits: email codes (1/min, 5/hour, 5 wrong tries), offers (8/hour), messages (10/min), idea posts (30 min apart).
 - Security headers on the API; production refuses a weak `JWT_SECRET`.
-- Attest never holds money: no payment keys exist anywhere in the code.
+- Attest never holds money between students: no payment keys exist anywhere in the code. Workspace plans are invoiced by hand.
+- Sign-in secret is read in one place (`api/src/config/jwtSecret.ts`) at use time.
 
 ## 9. After go-live
 - Watch Resend bounce and spam rates for login codes.

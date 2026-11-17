@@ -2,8 +2,8 @@ import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { CAMPUS_DOMAIN } from "../../../packages/types";
 import { CampusError, signInCampusEmail } from "./campusService";
+import { jwtSecret } from "../config/jwtSecret";
 
-const JWT_SECRET = process.env.JWT_SECRET || "embedra_super_secret_jwt_key_2026";
 const AUTHORITY = "https://login.microsoftonline.com/organizations/oauth2/v2.0";
 
 type MicrosoftConfig = {
@@ -39,7 +39,7 @@ export function microsoftSignInUrl(next: string | undefined) {
     const { clientId, redirectUri } = config();
     const nonce = crypto.randomBytes(16).toString("hex");
     const safeNext = next && next.startsWith("/") && !next.startsWith("//") ? next : undefined;
-    const state = jwt.sign({ nonce, next: safeNext, purpose: "microsoft-login" }, JWT_SECRET, { expiresIn: "10m" });
+    const state = jwt.sign({ nonce, next: safeNext, purpose: "microsoft-login" }, jwtSecret(), { expiresIn: "10m" });
     const params = new URLSearchParams({
         client_id: clientId,
         response_type: "code",
@@ -59,7 +59,7 @@ export async function completeMicrosoftSignIn(code: string, state: string) {
 
     let statePayload: { nonce: string; next?: string; purpose: string };
     try {
-        statePayload = jwt.verify(state, JWT_SECRET) as typeof statePayload;
+        statePayload = jwt.verify(state, jwtSecret()) as typeof statePayload;
     } catch {
         throw new CampusError(401, "The sign-in link expired. Start again.");
     }

@@ -6,8 +6,8 @@ import { db, users, eq, or } from "../../../packages/db/index";
 import { signupSchema, loginSchema } from "../../../packages/types";
 import { AuthenticatedRequest } from "../middleware/auth";
 import { toPublicUser } from "../services/campusService";
+import { jwtSecret } from "../config/jwtSecret";
 
-const JWT_SECRET = process.env.JWT_SECRET || "embedra_super_secret_jwt_key_2026";
 
 /**
  * Legacy password auth is switched off: every account must come through a verified academic email (RULES 1).
@@ -53,7 +53,7 @@ export const signup = async (req: Request, res: Response) => {
         // Sign JWT token
         const token = jwt.sign(
             { userId: newUser.id, username: newUser.username, email: newUser.email },
-            JWT_SECRET,
+            jwtSecret(),
             { expiresIn: "7d" }
         );
 
@@ -95,7 +95,7 @@ export const login = async (req: Request, res: Response) => {
         // Sign JWT token
         const token = jwt.sign(
             { userId: user.id, username: user.username, email: user.email },
-            JWT_SECRET,
+            jwtSecret(),
             { expiresIn: "7d" }
         );
 

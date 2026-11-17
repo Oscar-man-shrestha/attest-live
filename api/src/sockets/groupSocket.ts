@@ -6,9 +6,9 @@ import { AuthenticatedUser } from "../middleware/auth";
 import { checkContributorAccess } from "../controllers/groupController";
 import { db, groupMessages, users, eq } from "../../../packages/db/index";
 import { createMessageSchema } from "../../../packages/types";
+import { jwtSecret } from "../config/jwtSecret";
 
 
-const JWT_SECRET = process.env.JWT_SECRET || "embedra_super_secret_jwt_key_2026";
 
 interface CustomSocket extends Socket {
     data: {
@@ -50,7 +50,7 @@ export function setupSocketIO(io: SocketIOServer) {
         }
 
         try {
-            const decoded = jwt.verify(token, JWT_SECRET) as AuthenticatedUser;
+            const decoded = jwt.verify(token, jwtSecret()) as AuthenticatedUser;
             socket.data.user = decoded;
             next();
         } catch (err) {

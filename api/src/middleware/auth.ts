@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
+import { jwtSecret } from "../config/jwtSecret";
 
 export interface AuthenticatedUser {
     userId: string;
@@ -19,7 +20,7 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
         return res.status(401).json({ error: "Access token missing or invalid" });
     }
 
-    const secret = process.env.JWT_SECRET || "embedra_super_secret_jwt_key_2026";
+    const secret = jwtSecret();
 
     try {
         const decoded = jwt.verify(token, secret) as AuthenticatedUser;
@@ -38,7 +39,7 @@ export const authenticateTokenOptional = (req: AuthenticatedRequest, res: Respon
         return next();
     }
 
-    const secret = process.env.JWT_SECRET || "embedra_super_secret_jwt_key_2026";
+    const secret = jwtSecret();
 
     try {
         const decoded = jwt.verify(token, secret) as AuthenticatedUser;
